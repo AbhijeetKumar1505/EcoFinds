@@ -33,32 +33,11 @@ def load_user(user_id):
 
 def init_db():
     with app.app_context():
-        # Close any existing sessions
-        db.session.close()
-        
-        # Delete the database file if it exists
-        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
-        if os.path.exists(db_path):
-            os.remove(db_path)
-        
-        # Drop all tables and recreate them
+        # Drop all tables first
         db.drop_all()
+        # Create all tables
         db.create_all()
-        
-        # Create a test user
-        try:
-            test_user = User(
-                username='test',
-                email='test@test.com',
-                password=bcrypt.generate_password_hash('test123').decode('utf-8'),
-                address='Test Address'
-            )
-            db.session.add(test_user)
-            db.session.commit()
-            print("Database initialized successfully!")
-        except Exception as e:
-            print(f"Error initializing database: {e}")
-            db.session.rollback()
+        print("Database initialized successfully!")
 
 # Initialize the database
 init_db()
@@ -124,6 +103,7 @@ def profile():
     if request.method == 'POST':
         current_user.username = request.form['username']
         current_user.budget = float(request.form['budget'])
+        current_user.address = request.form.get('address', '')
         
         # Handle profile picture upload
         if 'profile_pic' in request.files:
@@ -144,7 +124,47 @@ def profile():
         
         db.session.commit()
         flash("Profile updated!", "success")
-    return render_template('profile.html')
+        return redirect(url_for('profile'))
+
+    # Get dashboard data
+    active_listings = Product.query.filter_by(user_id=current_user.id).count()
+    total_purchases = Purchase.query.filter_by(user_id=current_user.id).count()
+    
+    # Get user's listings
+    user_listings = Product.query.filter_by(user_id=current_user.id).all()
+    
+    # Get purchase history
+    purchase_history = Purchase.query.filter_by(user_id=current_user.id).order_by(Purchase.date.desc()).all()
+    
+    # Get recent activity (combining listings and purchases)
+    recent_activity = []
+    
+    # Add recent listings
+    for listing in user_listings:
+        recent_activity.append({
+            'title': f'Listed: {listing.title}',
+            'description': f'Price: ₹{listing.price}',
+            'date': listing.date.strftime('%Y-%m-%d %H:%M') if hasattr(listing, 'date') else 'N/A'
+        })
+    
+    # Add recent purchases
+    for purchase in purchase_history:
+        recent_activity.append({
+            'title': f'Purchased: {purchase.product_title}',
+            'description': f'Amount: ₹{purchase.product_price}',
+            'date': purchase.date.strftime('%Y-%m-%d %H:%M') if hasattr(purchase, 'date') else 'N/A'
+        })
+    
+    # Sort by date and get the 5 most recent activities
+    recent_activity.sort(key=lambda x: x['date'] if x['date'] != 'N/A' else '', reverse=True)
+    recent_activity = recent_activity[:5]
+
+    return render_template('profile.html',
+                         active_listings=active_listings,
+                         total_purchases=total_purchases,
+                         user_listings=user_listings,
+                         purchase_history=purchase_history,
+                         recent_activity=recent_activity)
 
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
@@ -257,6 +277,4 @@ def previous_purchases():
 
 # Run app
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)

@@ -1,40 +1,198 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-sm-10">
-        <div class="card shadow p-4">
-            <h4 class="text-success text-center mb-4">👤 My Profile</h4>
-            <div class="text-center mb-4">
-                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" 
-                     class="rounded-circle" 
-                     style="width: 150px; height: 150px; object-fit: cover;"
-                     alt="Profile Picture">
+<div class="container py-4">
+    <!-- Profile Header -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" 
+                         class="rounded-circle mb-3" 
+                         style="width: 150px; height: 150px; object-fit: cover;"
+                         alt="Profile Picture">
+                    <h4 class="mb-1">{{ current_user.username }}</h4>
+                    <p class="text-muted mb-3">{{ current_user.email }}</p>
+                    <div class="d-grid">
+                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            Edit Profile
+                        </button>
+                    </div>
+                </div>
             </div>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label>Profile Picture</label>
-                    <input type="file" name="profile_pic" class="form-control" accept="image/*">
-                    <small class="text-muted">Allowed formats: PNG, JPG, JPEG, GIF (max 2MB)</small>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Active Listings</h6>
+                            <h3 class="mb-0">{{ active_listings|default(0) }}</h3>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label>Username</label>
-                    <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Total Purchases</h6>
+                            <h3 class="mb-0">{{ total_purchases|default(0) }}</h3>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label>Email (read-only)</label>
-                    <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Budget</h6>
+                            <h3 class="mb-0">₹{{ current_user.budget|default(0) }}</h3>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label>Address</label>
-                    <input type="text" name="address" class="form-control" value="{{ current_user.address or '' }}" placeholder="Enter your address">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="activity-tab" data-bs-toggle="tab" href="#activity" role="tab">
+                                Recent Activity
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="listings-tab" data-bs-toggle="tab" href="#listings" role="tab">
+                                My Listings
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="purchases-tab" data-bs-toggle="tab" href="#purchases" role="tab">
+                                Purchase History
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mt-3" id="profileTabsContent">
+                        <!-- Recent Activity Tab -->
+                        <div class="tab-pane fade show active" id="activity" role="tabpanel">
+                            <div class="list-group">
+                                {% if recent_activity %}
+                                    {% for activity in recent_activity %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                                <small>{{ activity.date }}</small>
+                                            </div>
+                                            <p class="mb-1">{{ activity.description }}</p>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted text-center">No recent activity</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- My Listings Tab -->
+                        <div class="tab-pane fade" id="listings" role="tabpanel">
+                            <div class="d-grid gap-2 mb-3">
+                                <a href="{{ url_for('add') }}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Add New Listing
+                                </a>
+                            </div>
+                            <div class="row g-3">
+                                {% if user_listings %}
+                                    {% for listing in user_listings %}
+                                        <div class="col-md-4">
+                                            <div class="card h-100">
+                                                <img src="{{ url_for('static', filename='uploads/' + listing.image) }}" 
+                                                     class="card-img-top" 
+                                                     alt="{{ listing.title }}"
+                                                     style="height: 200px; object-fit: cover;">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">{{ listing.title }}</h5>
+                                                    <p class="card-text">₹{{ listing.price }}</p>
+                                                    <div class="d-grid gap-2">
+                                                        <a href="{{ url_for('edit', id=listing.id) }}" 
+                                                           class="btn btn-outline-primary btn-sm">
+                                                            Edit
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12">
+                                        <p class="text-muted text-center">No listings found</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Purchase History Tab -->
+                        <div class="tab-pane fade" id="purchases" role="tabpanel">
+                            <div class="list-group">
+                                {% if purchase_history %}
+                                    {% for purchase in purchase_history %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <h6 class="mb-1">{{ purchase.product_title }}</h6>
+                                                <small>{{ purchase.date.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            </div>
+                                            <p class="mb-1">Amount: ₹{{ purchase.product_price }}</p>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted text-center">No purchase history</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="mb-3">
-                    <label>Budget (₹)</label>
-                    <input type="number" name="budget" class="form-control" step="0.01" value="{{ current_user.budget }}" required>
-                </div>
-                <button type="submit" class="btn btn-success w-100">Update Profile</button>
-            </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label>Profile Picture</label>
+                        <input type="file" name="profile_pic" class="form-control" accept="image/*">
+                        <small class="text-muted">Allowed formats: PNG, JPG, JPEG, GIF (max 2MB)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label>Username</label>
+                        <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Email (read-only)</label>
+                        <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label>Address</label>
+                        <input type="text" name="address" class="form-control" value="{{ current_user.address or '' }}" placeholder="Enter your address">
+                    </div>
+                    <div class="mb-3">
+                        <label>Budget (₹)</label>
+                        <input type="number" name="budget" class="form-control" step="0.01" value="{{ current_user.budget }}" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Update Profile</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
