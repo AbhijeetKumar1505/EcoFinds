@@ -33,7 +33,7 @@ def load_user(user_id):
 
 def init_db():
     with app.app_context():
-        # Create all tables if they don't exist
+        # Only create tables if they don't exist
         db.create_all()
         print("Database initialized successfully!")
 
@@ -172,6 +172,15 @@ def add():
         description = request.form['description']
         category = request.form['category']
         price = float(request.form['price'])
+        quantity = int(request.form.get('quantity', 1))  # Get quantity from form
+
+        # Validate quantity
+        if quantity <= 0:
+            flash("Quantity must be greater than 0", "danger")
+            return redirect(url_for('add'))
+        if quantity > 10:
+            flash("Maximum quantity allowed is 10", "danger")
+            return redirect(url_for('add'))
 
         image = request.files['image']
         if image and allowed_file(image.filename):
@@ -187,6 +196,7 @@ def add():
             category=category,
             price=price,
             image=filename,
+            quantity=quantity,
             owner=current_user
         )
         db.session.add(new_product)
@@ -210,6 +220,14 @@ def edit(id):
         product.description = request.form['description']
         product.category = request.form['category']
         product.price = float(request.form['price'])
+        
+        # Handle quantity
+        quantity = int(request.form.get('quantity', 1))
+        if quantity <= 0:
+            flash("Quantity must be greater than 0", "danger")
+            return redirect(url_for('edit', id=id))
+        product.quantity = quantity
+        
         db.session.commit()
         flash("Product updated!", "success")
         return redirect(url_for('my_listings'))
@@ -233,17 +251,42 @@ def product_detail(id):
 @login_required
 def cart():
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
-    products = [Product.query.get(item.product_id) for item in cart_items]
-    return render_template('cart.html', products=products)
+    products = []
+    total = 0
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
+        if product:  # Check if product still exists
+            products.append({
+                'product': product,
+                'quantity': item.quantity,
+                'subtotal': product.price * item.quantity
+            })
+            total += product.price * item.quantity
+    return render_template('cart.html', products=products, total=total)
 
 @app.route('/add_to_cart/<int:product_id>')
 @login_required
 def add_to_cart(product_id):
+    product = Product.query.get_or_404(product_id)
+    
+    # Check if product is still available
+    if product.quantity <= 0:
+        flash("Sorry, this product is out of stock!", "danger")
+        return redirect(url_for('home'))
+    
     existing = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
     if not existing:
-        cart_item = CartItem(user_id=current_user.id, product_id=product_id)
+        cart_item = CartItem(user_id=current_user.id, product_id=product_id, quantity=1)
         db.session.add(cart_item)
         db.session.commit()
+        flash("Product added to cart!", "success")
+    else:
+        if existing.quantity < product.quantity:
+            existing.quantity += 1
+            db.session.commit()
+            flash("Product quantity updated in cart!", "success")
+        else:
+            flash("Maximum available quantity reached!", "warning")
     return redirect(url_for('cart'))
 
 @app.route('/remove_from_cart/<int:product_id>')
@@ -251,8 +294,14 @@ def add_to_cart(product_id):
 def remove_from_cart(product_id):
     cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
     if cart_item:
-        db.session.delete(cart_item)
-        db.session.commit()
+        if cart_item.quantity > 1:
+            cart_item.quantity -= 1
+            db.session.commit()
+            flash("Item quantity decreased in cart", "info")
+        else:
+            db.session.delete(cart_item)
+            db.session.commit()
+            flash("Item removed from cart", "info")
     return redirect(url_for('cart'))
 
 @app.route('/checkout')
@@ -260,17 +309,37 @@ def remove_from_cart(product_id):
 def checkout():
     cart_items = CartItem.query.filter_by(user_id=current_user.id).all()
     total = 0
+    
+    # First check if all items are available
     for item in cart_items:
         product = Product.query.get(item.product_id)
-        total += product.price
-        if current_user.budget >= product.price:
-            current_user.budget -= product.price
+        if not product or product.quantity < item.quantity:
+            flash(f"Sorry, {product.title if product else 'Some items'} are no longer available in the requested quantity!", "danger")
+            return redirect(url_for('cart'))
+        total += product.price * item.quantity
+    
+    # Then process the purchase
+    for item in cart_items:
+        product = Product.query.get(item.product_id)
+        if current_user.budget >= product.price * item.quantity:
+            current_user.budget -= product.price * item.quantity
+            product.quantity -= item.quantity
+            
+            # If quantity becomes 0, remove the product
+            if product.quantity == 0:
+                db.session.delete(product)
+            else:
+                db.session.add(product)
+                
             purchase = Purchase(user_id=current_user.id,
-                                product_title=product.title,
-                                product_price=product.price,
-                                product_image=product.image)
+                              product_title=product.title,
+                              product_price=product.price * item.quantity,
+                              product_image=product.image)
             db.session.add(purchase)
-            db.session.delete(product)
+        else:
+            flash("Insufficient budget!", "danger")
+            return redirect(url_for('cart'))
+            
     CartItem.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     flash(f"Purchase complete! Total: ₹{total}", "success")

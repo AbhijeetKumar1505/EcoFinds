@@ -22,6 +22,7 @@ class Product(db.Model):
     category = db.Column(db.String(50), nullable=False)
     price = db.Column(db.Float, nullable=False)
     image = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
 
@@ -29,6 +30,7 @@ class CartItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)
 
 class Purchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -25,6 +25,10 @@
                     <label>Price</label>
                     <input type="number" name="price" step="0.01" class="form-control" value="{{ product.price }}" required>
                 </div>
+                <div class="mb-3">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" class="form-control" min="1" value="{{ product.quantity }}" required>
+                </div>
                 <button type="submit" class="btn btn-success w-100">Update Listing</button>
             </form>
         </div>
