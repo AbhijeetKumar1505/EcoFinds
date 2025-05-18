@@ -3,15 +3,14 @@ Built with Flask, it features a user-friendly interface, a robust database, and 
 
 ## Table of Contents
 
-- [Features](#Features)
+- [Features](#features)
+- [MVP Link](https://drive.google.com/file/d/1VYSWpjrnXCX2m--Q61q2fB0NKCcAtqoh/view?usp=sharing)
 - [Screenshots](#screenshots)
-- [Demo](#demo)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Contributing](#contributing)
-- [Contact](#Contact)
+- [Contact](#contact)
+
 
 ---
 
@@ -25,19 +24,12 @@ Built with Flask, it features a user-friendly interface, a robust database, and 
 - 📱 **Responsive Design:** Works on desktop and mobile devices.
 
 ---
+## MVP Link : [https://drive.google.com/drive/folders/1QynnYZQYUUKpYF1x9yQ-XbUbdwFjhKxZ](https://drive.google.com/file/d/1VYSWpjrnXCX2m--Q61q2fB0NKCcAtqoh/view?usp=sharing)
+
 
 ## Screenshots
 
 ![image](https://github.com/user-attachments/assets/9a8fa845-b413-4d76-b53b-1ae2990908f5)
-
----
-
-## Demo
-
-Try the live demo: [EcoFinds Demo](https://your-demo-link.com)
-
----
-## MVP Link : [https://drive.google.com/drive/folders/1QynnYZQYUUKpYF1x9yQ-XbUbdwFjhKxZ](https://drive.google.com/file/d/1VYSWpjrnXCX2m--Q61q2fB0NKCcAtqoh/view?usp=sharing)
 
 ## Installation
 requirements.txt:
