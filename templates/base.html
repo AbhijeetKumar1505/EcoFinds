@@ -21,7 +21,13 @@
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('profile') }}">👤 {{ current_user.username }}</a>
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('profile') }}">
+                            <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" 
+                                 class="rounded-circle me-2" 
+                                 style="width: 30px; height: 30px; object-fit: cover;"
+                                 alt="Profile Picture">
+                            {{ current_user.username }}
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('my_listings') }}">📦 My Listings</a>
