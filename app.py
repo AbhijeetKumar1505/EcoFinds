@@ -63,9 +63,14 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
+        login = request.form['login']
         password = request.form['password']
-        user = User.query.filter_by(email=email).first()
+        
+        # Try to find user by email or username
+        user = User.query.filter(
+            (User.email == login) | (User.username == login)
+        ).first()
+        
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for('home'))
