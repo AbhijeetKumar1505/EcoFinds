@@ -10,10 +10,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(200), nullable=False)
     budget = db.Column(db.Float, default=1000.0)  # Default budget
     profile_pic = db.Column(db.String(100), default='default.jpg')
-
     listings = db.relationship('Product', backref='owner', lazy=True)
     purchases = db.relationship('Purchase', backref='buyer', lazy=True)
-
+    address = db.Column(db.String(200), nullable=True)  # newly added
+    
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
