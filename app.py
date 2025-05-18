@@ -33,9 +33,7 @@ def load_user(user_id):
 
 def init_db():
     with app.app_context():
-        # Drop all tables first
-        db.drop_all()
-        # Create all tables
+        # Create all tables if they don't exist
         db.create_all()
         print("Database initialized successfully!")
 
