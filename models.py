@@ -8,11 +8,11 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    budget = db.Column(db.Float, default=1000.0)  # Default budget
+    budget = db.Column(db.Float, default=1000.0)  
     profile_pic = db.Column(db.String(100), default='default.jpg')
     listings = db.relationship('Product', backref='owner', lazy=True)
     purchases = db.relationship('Purchase', backref='buyer', lazy=True)
-    address = db.Column(db.String(200), nullable=True)  # newly added
+    address = db.Column(db.String(200), nullable=False) 
     
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
