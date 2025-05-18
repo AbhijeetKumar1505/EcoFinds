@@ -269,6 +269,11 @@ def cart():
 def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
     
+    # Prevent users from buying their own products
+    if product.user_id == current_user.id:
+        flash("You cannot buy your own product!", "warning")
+        return redirect(url_for('home'))
+    
     # Check if product is still available
     if product.quantity <= 0:
         flash("Sorry, this product is out of stock!", "danger")
