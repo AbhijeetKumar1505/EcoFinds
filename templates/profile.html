@@ -4,7 +4,18 @@
     <div class="col-md-6 col-sm-10">
         <div class="card shadow p-4">
             <h4 class="text-success text-center mb-4">👤 My Profile</h4>
-            <form method="POST">
+            <div class="text-center mb-4">
+                <img src="{{ url_for('static', filename='uploads/' + current_user.profile_pic) }}" 
+                     class="rounded-circle" 
+                     style="width: 150px; height: 150px; object-fit: cover;"
+                     alt="Profile Picture">
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label>Profile Picture</label>
+                    <input type="file" name="profile_pic" class="form-control" accept="image/*">
+                    <small class="text-muted">Allowed formats: PNG, JPG, JPEG, GIF (max 2MB)</small>
+                </div>
                 <div class="mb-3">
                     <label>Username</label>
                     <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
