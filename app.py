@@ -248,6 +248,15 @@ def add_to_cart(product_id):
         db.session.commit()
     return redirect(url_for('cart'))
 
+@app.route('/remove_from_cart/<int:product_id>')
+@login_required
+def remove_from_cart(product_id):
+    cart_item = CartItem.query.filter_by(user_id=current_user.id, product_id=product_id).first()
+    if cart_item:
+        db.session.delete(cart_item)
+        db.session.commit()
+    return redirect(url_for('cart'))
+
 @app.route('/checkout')
 @login_required
 def checkout():
