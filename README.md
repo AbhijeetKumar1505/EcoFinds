@@ -24,7 +24,8 @@ Built with Flask, it features a user-friendly interface, a robust database, and 
 - 📱 **Responsive Design:** Works on desktop and mobile devices.
 
 ---
-## MVP Link : [https://drive.google.com/drive/folders/1QynnYZQYUUKpYF1x9yQ-XbUbdwFjhKxZ](https://drive.google.com/file/d/1VYSWpjrnXCX2m--Q61q2fB0NKCcAtqoh/view?usp=sharing)
+## MVP Link : https://drive.google.com/drive/folders/1QynnYZQYUUKpYF1x9yQ-XbUbdwFjhKxZ?usp=sharing
+
 
 
 ## Screenshots
