@@ -4,7 +4,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from flask_bcrypt import Bcrypt
 import os
 from werkzeug.utils import secure_filename
-from models import db, User, Product, CartItem, Purchase
+from models import db, User, Product, CartItem, Purchase, ProductImage
 import time
 
 app = Flask(__name__)
@@ -172,7 +172,7 @@ def add():
         description = request.form['description']
         category = request.form['category']
         price = float(request.form['price'])
-        quantity = int(request.form.get('quantity', 1))  # Get quantity from form
+        quantity = int(request.form.get('quantity', 1))
 
         # Validate quantity
         if quantity <= 0:
@@ -182,12 +182,22 @@ def add():
             flash("Maximum quantity allowed is 10", "danger")
             return redirect(url_for('add'))
 
-        image = request.files['image']
-        if image and allowed_file(image.filename):
-            filename = secure_filename(image.filename)
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Handle multiple image uploads
+        images = request.files.getlist('images[]')
+        if not images or len(images) == 0:
+            flash("At least one image is required", "danger")
+            return redirect(url_for('add'))
+        if len(images) > 7:
+            flash("Maximum 7 images allowed", "danger")
+            return redirect(url_for('add'))
+
+        # Create new product with first image as main image
+        main_image = images[0]
+        if main_image and allowed_file(main_image.filename):
+            main_filename = secure_filename(f"{int(time.time())}_{main_image.filename}")
+            main_image.save(os.path.join(app.config['UPLOAD_FOLDER'], main_filename))
         else:
-            flash("Invalid image format", "danger")
+            flash("Invalid image format for main image", "danger")
             return redirect(url_for('add'))
 
         new_product = Product(
@@ -195,11 +205,24 @@ def add():
             description=description,
             category=category,
             price=price,
-            image=filename,
             quantity=quantity,
+            image=main_filename,  # Main image
             owner=current_user
         )
         db.session.add(new_product)
+        db.session.flush()  # Get product ID before committing
+
+        # Save additional images
+        for idx, image in enumerate(images[1:], 1):  # Skip first image as it's already saved as main
+            if image and allowed_file(image.filename):
+                filename = secure_filename(f"{int(time.time())}_{idx}_{image.filename}")
+                image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                product_image = ProductImage(
+                    filename=filename,
+                    product_id=new_product.id
+                )
+                db.session.add(product_image)
+
         db.session.commit()
         flash("Product added!", "success")
         return redirect(url_for('home'))
