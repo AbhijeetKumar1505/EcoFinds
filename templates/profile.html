@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-sm-10">
+        <div class="card shadow p-4">
+            <h4 class="text-success text-center mb-4">👤 My Profile</h4>
+            <form method="POST">
+                <div class="mb-3">
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control" value="{{ current_user.username }}" required>
+                </div>
+                <div class="mb-3">
+                    <label>Email (read-only)</label>
+                    <input type="email" class="form-control" value="{{ current_user.email }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label>Budget (₹)</label>
+                    <input type="number" name="budget" class="form-control" step="0.01" value="{{ current_user.budget }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Update Profile</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

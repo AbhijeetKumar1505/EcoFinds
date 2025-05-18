@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h4 class="text-success mb-3">🧾 Purchase History</h4>
+
+{% if purchases|length == 0 %}
+    <div class="alert alert-info text-center">You haven’t bought anything yet.</div>
+{% endif %}
+
+<div class="row row-cols-1 row-cols-md-2 g-4">
+    {% for p in purchases %}
+    <div class="col">
+        <div class="card shadow-sm h-100">
+            <img src="{{ url_for('static', filename='uploads/' + p.product_image) }}" class="card-img-top" alt="Purchase">
+            <div class="card-body">
+                <h5 class="card-title">{{ p.product_title }}</h5>
+                <p class="card-text text-muted">Price: ₹{{ p.product_price }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

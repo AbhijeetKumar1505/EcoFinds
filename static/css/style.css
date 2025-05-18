@@ -1,0 +1,45 @@
+/* styles.css */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8fdf8;
+}
+
+.navbar {
+    box-shadow: 0 4px 6px rgba(0, 128, 0, 0.2);
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.btn-success {
+    background-color: #2e8b57;
+    border: none;
+}
+
+.btn-success:hover {
+    background-color: #276947;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        font-size: 0.9rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+}
