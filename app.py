@@ -5,6 +5,7 @@ from flask_bcrypt import Bcrypt
 import os
 from werkzeug.utils import secure_filename
 from models import db, User, Product, CartItem, Purchase
+import time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ecoFindsSuperSecretKey'
@@ -92,6 +93,24 @@ def profile():
     if request.method == 'POST':
         current_user.username = request.form['username']
         current_user.budget = float(request.form['budget'])
+        
+        # Handle profile picture upload
+        if 'profile_pic' in request.files:
+            file = request.files['profile_pic']
+            if file and file.filename != '' and allowed_file(file.filename):
+                # Delete old profile picture if it's not the default
+                if current_user.profile_pic != 'default.jpg':
+                    old_pic_path = os.path.join(app.config['UPLOAD_FOLDER'], current_user.profile_pic)
+                    if os.path.exists(old_pic_path):
+                        os.remove(old_pic_path)
+                
+                # Save new profile picture
+                filename = secure_filename(file.filename)
+                # Add timestamp to filename to make it unique
+                filename = f"{current_user.id}_{int(time.time())}_{filename}"
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                current_user.profile_pic = filename
+        
         db.session.commit()
         flash("Profile updated!", "success")
     return render_template('profile.html')
