@@ -13,6 +13,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max image size
 
+# Ensure upload folder exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 db.init_app(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager()
@@ -28,10 +31,37 @@ def allowed_file(filename):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-with app.app_context():
-    db.create_all()
+def init_db():
+    with app.app_context():
+        # Close any existing sessions
+        db.session.close()
+        
+        # Delete the database file if it exists
+        db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        
+        # Drop all tables and recreate them
+        db.drop_all()
+        db.create_all()
+        
+        # Create a test user
+        try:
+            test_user = User(
+                username='test',
+                email='test@test.com',
+                password=bcrypt.generate_password_hash('test123').decode('utf-8'),
+                address='Test Address'
+            )
+            db.session.add(test_user)
+            db.session.commit()
+            print("Database initialized successfully!")
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+            db.session.rollback()
 
-
+# Initialize the database
+init_db()
 
 @app.route('/')
 def home():
@@ -71,10 +101,11 @@ def signup():
         email = request.form['email']
         username = request.form['username']
         password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+        address = request.form.get('address', '')  # Get address from form, default to empty string
         if User.query.filter_by(email=email).first():
             flash("Email already registered!", "danger")
         else:
-            new_user = User(username=username, email=email, password=password)
+            new_user = User(username=username, email=email, password=password, address=address)
             db.session.add(new_user)
             db.session.commit()
             flash("Account created! Please login.", "success")
