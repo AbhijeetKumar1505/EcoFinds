@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-conten padding-y" style="min-height:84vh">
+    <div class="card mx-auto" style="max-width: 800px; margin-top:50px;">
+        <div class="card-body">
+            <h4 class="card-title mb-4 text-center">Create Your Account</h4>
+            {% include 'includes/alerts.html' %}
+            
+            <!-- Progress Steps -->
+            <div class="progress-steps mb-4">
+                <div class="step active">
+                    <div class="step-number">1</div>
+                    <div class="step-text">Account Details</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">Preferences</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">Payment Details</div>
+                </div>
+            </div>
+
+            <form action="{% url 'register' %}" method="POST" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Personal Information -->
+                <div class="form-section mb-4">
+                    <h5 class="section-title">Personal Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>First Name</label>
+                            {{ form.first_name }}
+                            <div class="invalid-feedback">Please enter your first name</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Last Name</label>
+                            {{ form.last_name }}
+                            <div class="invalid-feedback">Please enter your last name</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Email Address</label>
+                            {{ form.email }}
+                            <div class="invalid-feedback">Please enter a valid email address</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Phone Number</label>
+                            {{ form.phone_number }}
+                            <div class="invalid-feedback">Please enter your phone number</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div class="form-section mb-4">
+                    <h5 class="section-title">Security</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Create Password</label>
+                            <div class="input-group">
+                                {{ form.password }}
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">Please enter a password</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Confirm Password</label>
+                            <div class="input-group">
+                                {{ form.confirm_password }}
+                                <button class="btn btn-outline-secondary toggle-password" type="button">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">Please confirm your password</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="form-section mb-4">
+                    <h5 class="section-title">Preferences</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Communication Preference</label>
+                            {{ form.communication_preference }}
+                            <small class="form-text text-muted">How would you like us to contact you?</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Preferred Language</label>
+                            {{ form.preferred_language }}
+                            <small class="form-text text-muted">Select your preferred language for communication</small>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3" id="otherLanguageGroup" style="display: none;">
+                            <label>Other Language</label>
+                            {{ form.other_language }}
+                            <small class="form-text text-muted">Please specify if you selected 'Other'</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-center">
+            <p class="mb-0">Already have an account? <a href="{% url 'login' %}" class="text-primary">Log in</a></p>
+        </div>
+    </div>
+</section>
+
+{% block extra_css %}
+<style>
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+    background-color: #007bff;
+    color: white;
+}
+
+.step-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.step.active .step-text {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.step-line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #e9ecef;
+    margin: 0 1rem;
+    position: relative;
+    top: -20px;
+}
+
+.form-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #495057;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.form-control {
+    border-radius: 0.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+
+.form-text {
+    font-size: 0.875rem;
+}
+
+.toggle-password {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+    });
+
+    // Handle other language field
+    const languageSelect = document.querySelector('#id_preferred_language');
+    const otherLanguageGroup = document.querySelector('#otherLanguageGroup');
+    const otherLanguageInput = document.querySelector('#id_other_language');
+
+    function toggleOtherLanguage() {
+        if (languageSelect.value === 'other') {
+            otherLanguageGroup.style.display = 'block';
+            otherLanguageInput.required = true;
+        } else {
+            otherLanguageGroup.style.display = 'none';
+            otherLanguageInput.required = false;
+            otherLanguageInput.value = ''; // Clear the value when hidden
+        }
+    }
+
+    languageSelect.addEventListener('change', toggleOtherLanguage);
+    toggleOtherLanguage(); // Initial state
+
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

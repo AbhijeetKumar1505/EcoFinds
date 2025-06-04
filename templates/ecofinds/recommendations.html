@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2 class="mb-4">Recommended for You</h2>
+            
+            {% if recommended_products %}
+                <div class="row">
+                    {% for product in recommended_products %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.title }}">
+                                {% else %}
+                                    <div class="card-img-top bg-light text-center py-5">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ product.title }}</h5>
+                                    <p class="card-text text-muted">{{ product.category }}</p>
+                                    <p class="card-text">${{ product.price }}</p>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Condition: {{ product.get_condition_display }}<br>
+                                            Location: {{ product.location }}
+                                        </small>
+                                    </p>
+                                </div>
+                                
+                                <div class="card-footer bg-white">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">View Details</a>
+                                        {% if user.is_authenticated %}
+                                            <form action="{% url 'save_product' product.id %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger">
+                                                    <i class="fas fa-heart"></i> Save
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-lightbulb fa-3x text-muted mb-3"></i>
+                    <h4>No recommendations yet</h4>
+                    <p class="text-muted">Start browsing and saving items to get personalized recommendations</p>
+                    <a href="{% url 'home' %}" class="btn btn-primary mt-3">Browse Products</a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">How Recommendations Work</h5>
+                    <p class="card-text">
+                        Our recommendation system analyzes your:
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-shopping-cart text-primary"></i> Purchase history</li>
+                        <li><i class="fas fa-heart text-danger"></i> Saved items</li>
+                        <li><i class="fas fa-tags text-success"></i> Category preferences</li>
+                    </ul>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            The more you interact with products, the better your recommendations will be!
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

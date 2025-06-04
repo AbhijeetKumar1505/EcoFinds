@@ -1,0 +1,172 @@
+/* EcoFinds Theme */
+:root {
+    --primary-color: #2e8b57;
+    --primary-hover: #276947;
+    --background-color: #f8fdf8;
+    --text-color: #333;
+    --border-radius: 12px;
+    --box-shadow: 0 4px 6px rgba(0, 128, 0, 0.2);
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: var(--box-shadow);
+    background-color: white;
+}
+
+.navbar-brand {
+    color: var(--primary-color) !important;
+    font-weight: bold;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Buttons */
+.btn-success {
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 0.5rem 1.5rem;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-hover);
+}
+
+.btn-outline-success {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-success:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Forms */
+.form-control {
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 139, 87, 0.25);
+}
+
+.form-select {
+    border-radius: var(--border-radius);
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+}
+
+/* Alerts */
+.alert {
+    border-radius: var(--border-radius);
+    border: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: var(--border-radius);
+}
+
+/* Links */
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        font-size: 0.9rem;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .form-control, .form-select {
+        font-size: 0.9rem;
+    }
+}
+
+/* Custom Components */
+.product-card {
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.product-card img {
+    transition: transform 0.3s;
+}
+
+.product-card:hover img {
+    transform: scale(1.05);
+}
+
+.price-tag {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.rating {
+    color: #ffc107;
+}
+
+/* Footer */
+.footer {
+    background-color: white;
+    box-shadow: 0 -4px 6px rgba(0, 128, 0, 0.1);
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+} 

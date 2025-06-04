@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-conten padding-y" style="min-height:84vh">
+    <div class="card mx-auto" style="max-width: 800px; margin-top:50px;">
+        <div class="card-body">
+            <h4 class="card-title mb-4 text-center">Payment Details</h4>
+            {% include 'includes/alerts.html' %}
+            
+            <!-- Progress Steps -->
+            <div class="progress-steps mb-4">
+                <div class="step completed">
+                    <div class="step-number"><i class="fas fa-check"></i></div>
+                    <div class="step-text">Account Details</div>
+                </div>
+                <div class="step-line completed"></div>
+                <div class="step completed">
+                    <div class="step-number"><i class="fas fa-check"></i></div>
+                    <div class="step-text">Preferences</div>
+                </div>
+                <div class="step-line completed"></div>
+                <div class="step active">
+                    <div class="step-number">3</div>
+                    <div class="step-text">Payment Details</div>
+                </div>
+            </div>
+
+            <form action="{% url 'payment_details' %}" method="POST" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Payment Information -->
+                <div class="form-section mb-4">
+                    <h5 class="section-title">Bank Account Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Account Holder Name</label>
+                            {{ form.account_holder_name }}
+                            <div class="invalid-feedback">Please enter the account holder name</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>Bank Name</label>
+                            {{ form.bank_name }}
+                            <div class="invalid-feedback">Please enter the bank name</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Account Number</label>
+                            {{ form.account_number }}
+                            <div class="invalid-feedback">Please enter a valid account number</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label>IFSC Code</label>
+                            {{ form.ifsc_code }}
+                            <div class="invalid-feedback">Please enter a valid IFSC code</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label>Branch Name</label>
+                            {{ form.branch_name }}
+                            <div class="invalid-feedback">Please enter the branch name</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Save Payment Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+{% block extra_css %}
+<style>
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+    background-color: #007bff;
+    color: white;
+}
+
+.step.completed .step-number {
+    background-color: #28a745;
+    color: white;
+}
+
+.step-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.step.active .step-text,
+.step.completed .step-text {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.step-line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #e9ecef;
+    margin: 0 1rem;
+    position: relative;
+    top: -20px;
+}
+
+.step-line.completed {
+    background-color: #28a745;
+}
+
+.form-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    color: #495057;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.form-control {
+    border-radius: 0.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %} 

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow p-4">
+            <h4 class="text-success text-center mb-4">Edit Product</h4>
+            <form method="POST">
+                <div class="mb-3">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" value="{{ product.title }}" required>
+                </div>
+                <div class="mb-3">
+                    <label>Category</label>
+                    <select class="form-select" name="category" required>
+                        {% for cat in ['Electronics', 'Clothing', 'Books', 'Furniture', 'Toys'] %}
+                            <option value="{{ cat }}" {% if product.category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="3" required>{{ product.description }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label>Price</label>
+                    <input type="number" name="price" step="0.01" class="form-control" value="{{ product.price }}" required>
+                </div>
+                <div class="mb-3">
+                    <label>Quantity</label>
+                    <input type="number" name="quantity" class="form-control" min="1" value="{{ product.quantity }}" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Update Listing</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

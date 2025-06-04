@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Verify Your Account</h2>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="text-center mb-4">
+                        <p>We've sent a verification code to:</p>
+                        <p class="fw-bold">{{ email }}</p>
+                        <p class="text-muted">Please check your email and enter the code below.</p>
+                    </div>
+                    
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="email" value="{{ email }}">
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Enter Verification Code</label>
+                            <div class="input-group">
+                                <input type="text" name="otp" class="form-control form-control-lg text-center" 
+                                       maxlength="6" pattern="[0-9]{6}" required
+                                       placeholder="Enter 6-digit code">
+                                <button class="btn btn-outline-secondary" type="button" id="resendBtn" disabled>
+                                    Resend Code
+                                </button>
+                            </div>
+                            <div class="invalid-feedback">
+                                Please enter the 6-digit verification code.
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle"></i> Verify Account
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted">
+                            Didn't receive the code? 
+                            <a href="#" id="resendLink">Resend verification code</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const resendBtn = document.getElementById('resendBtn');
+    const resendLink = document.getElementById('resendLink');
+    let countdown = 60;
+    
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // OTP input formatting
+    const otpInput = document.querySelector('input[name="otp"]');
+    otpInput.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    
+    // Resend code functionality
+    function startCountdown() {
+        resendBtn.disabled = true;
+        resendLink.style.pointerEvents = 'none';
+        resendLink.style.opacity = '0.5';
+        
+        const timer = setInterval(() => {
+            countdown--;
+            resendBtn.textContent = `Resend Code (${countdown}s)`;
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend Code';
+                resendLink.style.pointerEvents = 'auto';
+                resendLink.style.opacity = '1';
+                countdown = 60;
+            }
+        }, 1000);
+    }
+    
+    function handleResend() {
+        fetch('{% url "resend_otp" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                email: document.querySelector('input[name="email"]').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                startCountdown();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+    
+    resendBtn.addEventListener('click', handleResend);
+    resendLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        handleResend();
+    });
+    
+    // Start initial countdown
+    startCountdown();
+});
+</script>
+{% endblock %}
+{% endblock %} 

@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Purchase History</h2>
+    
+    {% if purchases_by_month %}
+        {% for month, purchases in purchases_by_month.items %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        {{ month|date:"F Y" }}
+                        <span class="badge bg-primary float-end">{{ purchases|length }} purchases</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Total Price</th>
+                                    <th>Payment Method</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for purchase in purchases %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if purchase.product.images.first %}
+                                                    <img src="{{ purchase.product.images.first.image.url }}" 
+                                                         class="rounded me-2" 
+                                                         width="50" 
+                                                         height="50" 
+                                                         alt="{{ purchase.product.title }}">
+                                                {% else %}
+                                                    <div class="rounded bg-light text-center me-2" 
+                                                         style="width: 50px; height: 50px; line-height: 50px;">
+                                                        <i class="fas fa-image text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <a href="{% url 'product_detail' purchase.product.id %}" 
+                                                       class="text-decoration-none">
+                                                        {{ purchase.product.title }}
+                                                    </a>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Seller: {{ purchase.product.owner.username }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ purchase.quantity }}</td>
+                                        <td>${{ purchase.total_price }}</td>
+                                        <td>
+                                            <span class="badge {% if purchase.payment_method == 'paypal' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                                {{ purchase.get_payment_method_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if purchase.payment_status == 'completed' %}bg-success{% elif purchase.payment_status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ purchase.payment_status|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ purchase.date|date:"M d, Y" }}</td>
+                                        <td>
+                                            {% if purchase.payment_status != 'completed' %}
+                                                <a href="{% url 'process_payment' purchase.id %}" 
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-credit-card"></i> Pay Now
+                                                </a>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-success" disabled>
+                                                    <i class="fas fa-check"></i> Paid
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Total Purchases:</strong> {{ purchases|length }}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <strong>Total Amount:</strong> 
+                            ${{ purchases|sum:"total_price"|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+            <h4>No purchases yet</h4>
+            <p class="text-muted">Your purchase history will appear here</p>
+            <a href="{% url 'home' %}" class="btn btn-primary mt-3">Browse Products</a>
+        </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add sorting functionality
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+        const headers = table.querySelectorAll('th');
+        headers.forEach((header, index) => {
+            if (index !== 6) { // Skip the Actions column
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', () => {
+                    sortTable(table, index);
+                });
+            }
+        });
+    });
+});
+
+function sortTable(table, column) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const isNumeric = column === 1 || column === 2; // Quantity and Total Price columns
+    
+    rows.sort((a, b) => {
+        const aValue = a.cells[column].textContent.trim();
+        const bValue = b.cells[column].textContent.trim();
+        
+        if (isNumeric) {
+            return parseFloat(aValue.replace('$', '')) - parseFloat(bValue.replace('$', ''));
+        }
+        return aValue.localeCompare(bValue);
+    });
+    
+    // Toggle sort direction
+    if (table.dataset.sortColumn === column.toString()) {
+        rows.reverse();
+        table.dataset.sortDirection = table.dataset.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+        table.dataset.sortColumn = column.toString();
+        table.dataset.sortDirection = 'asc';
+    }
+    
+    tbody.append(...rows);
+}
+</script>
+{% endblock %}
+{% endblock %} 

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Saved Items</h2>
+    
+    {% if saved_products %}
+        <div class="row">
+            {% for product in saved_products %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if product.images.first %}
+                            <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.title }}">
+                        {% else %}
+                            <div class="card-img-top bg-light text-center py-5">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.title }}</h5>
+                            <p class="card-text text-muted">{{ product.category }}</p>
+                            <p class="card-text">${{ product.price }}</p>
+                            <p class="card-text">
+                                <small class="text-muted">Condition: {{ product.get_condition_display }}</small>
+                            </p>
+                        </div>
+                        
+                        <div class="card-footer bg-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">View Details</a>
+                                <form action="{% url 'save_product' product.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="fas fa-heart"></i> Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+            <h4>No saved items yet</h4>
+            <p class="text-muted">Items you save will appear here</p>
+            <a href="{% url 'home' %}" class="btn btn-primary mt-3">Browse Products</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 
