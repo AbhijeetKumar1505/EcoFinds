@@ -19,7 +19,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <h5>{{ cart_item.product.title }}</h5>
-                                    <p class="text-muted">${{ cart_item.product.price }}</p>
+                                    <p class="text-muted">₹{{ cart_item.product.price }}</p>
                                 </div>
                                 <div class="col-md-3">
                                     <div class="input-group">
@@ -29,7 +29,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-2">
-                                    <p class="fw-bold">${{ cart_item.sub_total }}</p>
+                                    <p class="fw-bold">₹{{ cart_item.sub_total }}</p>
                                 </div>
                                 <div class="col-md-1">
                                     <a href="{% url 'store:remove_cart_item' cart_item.product.id %}" class="btn btn-danger btn-sm">

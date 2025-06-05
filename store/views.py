@@ -19,6 +19,8 @@ from accounts.models import UserProfile
 from django.contrib.auth.models import User
 from wishlist.models import WishlistItem, SearchQuery, PriceAlert
 from django.contrib.auth import get_user_model
+import datetime
+import os
 
 User = get_user_model()
 
@@ -36,6 +38,7 @@ def store(request, category_slug=None):
     location_filter = request.GET.get('location')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
+    sort_by = request.GET.get('sort_by', 'newest')  # Default to newest
 
     # Base queryset
     products = Product.objects.filter(is_available=True)
@@ -59,8 +62,15 @@ def store(request, category_slug=None):
     if max_price:
         products = products.filter(price__lte=max_price)
 
-    # Order products by creation date
-    products = products.order_by('-created_date')
+    # Apply sorting
+    if sort_by == 'price_low':
+        products = products.order_by('price')
+    elif sort_by == 'price_high':
+        products = products.order_by('-price')
+    elif sort_by == 'rating':
+        products = products.annotate(avg_rating=Avg('reviewrating__rating')).order_by('-avg_rating')
+    else:  # newest
+        products = products.order_by('-created_date')
 
     # Pagination
     paginator = Paginator(products, 6)
@@ -81,6 +91,7 @@ def store(request, category_slug=None):
         'selected_location': location_filter,
         'min_price': min_price,
         'max_price': max_price,
+        'selected_sort': sort_by,
     }
     return render(request, 'store/store.html', context)
 
@@ -525,17 +536,39 @@ def checkout(request):
         # Process the order
         order = Order.objects.create(
             user=request.user,
-            total_amount=total,
-            shipping_address=request.POST.get('shipping_address'),
-            status='pending'
+            first_name=request.POST.get('first_name'),
+            last_name=request.POST.get('last_name'),
+            phone=request.POST.get('phone'),
+            email=request.POST.get('email'),
+            address_line_1=request.POST.get('address_line_1'),
+            address_line_2=request.POST.get('address_line_2', ''),
+            country=request.POST.get('country'),
+            state=request.POST.get('state'),
+            city=request.POST.get('city'),
+            order_total=total,
+            status='New',
+            ip=request.META.get('REMOTE_ADDR'),
+            order_note=request.POST.get('order_note', '')
         )
+        
+        # Generate order number
+        yr = int(datetime.date.today().strftime('%Y'))
+        dt = int(datetime.date.today().strftime('%d'))
+        mt = int(datetime.date.today().strftime('%m'))
+        d = datetime.date(yr, mt, dt)
+        current_date = d.strftime("%Y%m%d")
+        order_number = current_date + str(order.id)
+        order.order_number = order_number
+        order.save()
         
         for cart_item in cart_items:
             OrderProduct.objects.create(
                 order=order,
+                user=request.user,
                 product=cart_item.product,
                 quantity=cart_item.quantity,
-                price=cart_item.product.price
+                product_price=cart_item.product.price,
+                ordered=True
             )
         
         # Clear the cart
@@ -628,6 +661,15 @@ def edit_profile(request):
         
         # Handle profile picture upload
         if 'profile_picture' in request.FILES:
+            # Delete old profile picture if it exists
+            if profile.profile_picture:
+                try:
+                    if os.path.isfile(profile.profile_picture.path):
+                        os.remove(profile.profile_picture.path)
+                except Exception as e:
+                    print(f"Error deleting old profile picture: {e}")
+            
+            # Save new profile picture
             profile.profile_picture = request.FILES['profile_picture']
         
         profile.save()

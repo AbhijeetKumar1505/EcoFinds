@@ -115,12 +115,28 @@
 						<p class="mb-0">Found {{ product_count }} products</p>
 					</div>
 					<div class="col-md-6 d-flex justify-content-end">
-						<select name="sort_by" class="form-select me-2" style="width: auto;" onchange="this.form.submit()">
-							<option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Newest First</option>
-							<option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-							<option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-							<option value="rating" {% if selected_sort == 'rating' %}selected{% endif %}>Top Rated</option>
-						</select>
+						<!-- Sorting Dropdown -->
+						<div class="dropdown">
+							<button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+								{% if selected_sort == 'newest' %}
+									Newest
+								{% elif selected_sort == 'price_low' %}
+									Price: Low to High
+								{% elif selected_sort == 'price_high' %}
+									Price: High to Low
+								{% elif selected_sort == 'rating' %}
+									Top Rated
+								{% else %}
+									Sort By
+								{% endif %}
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="sortDropdown">
+								<li><a class="dropdown-item {% if selected_sort == 'newest' %}active{% endif %}" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}sort_by=newest">Newest</a></li>
+								<li><a class="dropdown-item {% if selected_sort == 'price_low' %}active{% endif %}" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}sort_by=price_low">Price: Low to High</a></li>
+								<li><a class="dropdown-item {% if selected_sort == 'price_high' %}active{% endif %}" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}sort_by=price_high">Price: High to Low</a></li>
+								<li><a class="dropdown-item {% if selected_sort == 'rating' %}active{% endif %}" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}sort_by=rating">Top Rated</a></li>
+							</ul>
+						</div>
 						{% if request.user.is_authenticated %}
 						<button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#saveSearchModal">
 							<i class="fa fa-bell"></i> Save Search
@@ -177,22 +193,6 @@
 	</div>
 </div>
 
-<form action="{% url 'store:search' %}" class="search" method='GET'>
-	<div class="input-group w-100">
-		<input type="text" class="form-control" style="width:60%;" placeholder="Search" name="keyword">
-		<div class="input-group-append">
-			<button class="btn btn-primary" type="submit">
-				<i class="fa fa-search"></i>
-			</button>
-		</div>
-	</div>
-</form>
-
-{% if user.is_authenticated %}
-<div class="mt-3">
-	<button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#saveSearchForm">
-		Save this Search
-	</button>
 	<div class="collapse mt-3" id="saveSearchForm">
 		<div class="card card-body">
 			<form action="{% url 'store:save_search_query' %}" method="POST">
@@ -228,7 +228,6 @@
 		</div>
 	</div>
 </div>
-{% endif %}
 
 	</main> <!-- col.// -->
 

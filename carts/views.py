@@ -69,7 +69,7 @@ def add_cart(request, product_id):
                 cart_item.variations.clear()
                 cart_item.variations.add(*product_variation)
             cart_item.save()
-        return redirect('cart')
+        return redirect('carts:cart')
     # If the user is not authenticated
     else:
         product_variation = []
@@ -96,17 +96,12 @@ def add_cart(request, product_id):
         is_cart_item_exists = CartItem.objects.filter(product=product, cart=cart).exists()
         if is_cart_item_exists:
             cart_item = CartItem.objects.filter(product=product, cart=cart)
-            # existing_variations -> database
-            # current variation -> product_variation
-            # item_id -> database
             ex_var_list = []
             id = []
             for item in cart_item:
                 existing_variation = item.variations.all()
                 ex_var_list.append(list(existing_variation))
                 id.append(item.id)
-
-            print(ex_var_list)
 
             if product_variation in ex_var_list:
                 # increase the cart item quantity
@@ -132,11 +127,10 @@ def add_cart(request, product_id):
                 cart_item.variations.clear()
                 cart_item.variations.add(*product_variation)
             cart_item.save()
-        return redirect('cart')
+        return redirect('carts:cart')
 
 
 def remove_cart(request, product_id, cart_item_id):
-
     product = get_object_or_404(Product, id=product_id)
     try:
         if request.user.is_authenticated:
@@ -151,7 +145,7 @@ def remove_cart(request, product_id, cart_item_id):
             cart_item.delete()
     except:
         pass
-    return redirect('cart')
+    return redirect('carts:cart')
 
 
 def remove_cart_item(request, product_id, cart_item_id):
@@ -162,7 +156,7 @@ def remove_cart_item(request, product_id, cart_item_id):
         cart = Cart.objects.get(cart_id=_cart_id(request))
         cart_item = CartItem.objects.get(product=product, cart=cart, id=cart_item_id)
     cart_item.delete()
-    return redirect('cart')
+    return redirect('carts:cart')
 
 
 @login_required(login_url='accounts:login')
