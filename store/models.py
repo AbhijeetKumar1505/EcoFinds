@@ -20,7 +20,7 @@ class Product(models.Model):
         ('auction', 'Auction'),
     ]
 
-    title = models.CharField(max_length=200, unique=True)
+    title = models.CharField(max_length=200, unique=True,null=True, blank=True)
     slug = models.SlugField(max_length=200, unique=True)
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)

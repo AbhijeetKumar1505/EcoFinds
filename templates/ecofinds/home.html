@@ -1,308 +1,55 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block extra_css %}
-<style>
-    .filter-sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 300px;
-        background: white;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        padding: 20px;
-        transition: transform 0.3s ease;
-        z-index: 1000;
-    }
-
-    .filter-sidebar.hidden {
-        transform: translateX(-100%);
-    }
-
-    .filter-toggle {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 1001;
-        background: white;
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        cursor: pointer;
-    }
-
-    .main-content {
-        margin-left: 320px;
-        transition: margin-left 0.3s ease;
-    }
-
-    .main-content.expanded {
-        margin-left: 20px;
-    }
-
-    @media (max-width: 768px) {
-        .filter-sidebar {
-            width: 100%;
-        }
-        .main-content {
-            margin-left: 0;
-        }
-    }
-
-    /* Sidebar Styles */
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        width: 300px;
-        background: white;
-        z-index: 1000;
-        transition: transform 0.3s ease-in-out;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-        padding: 20px;
-        overflow-y: auto;
-    }
-
-    .sidebar.collapsed {
-        transform: translateX(-100%);
-    }
-
-    /* Footer Styles */
-    .footer {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        background-color: #f8f9fa;
-        padding: 20px 0;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-    }
-
-    /* Main Content Adjustment */
-    .container-fluid {
-        margin-bottom: 100px; /* Add space for footer */
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<section class="section-conten padding-y bg">
+<section class="section-padding">
     <div class="container">
         <div class="row">
-            <!-- Filters Sidebar -->
-            <aside class="col-md-3">
-                <div class="card">
-                    <article class="filter-group">
-                        <header class="card-header">
-                            <h6 class="title">Filters</h6>
-                        </header>
-                        <div class="filter-content collapse show" id="collapse_1">
-                            <div class="card-body">
-                                <form method="GET" action="{% url 'home' %}">
-                                    <!-- Search -->
-                                    <div class="form-group">
-                                        <label>Search</label>
-                                        <input type="text" class="form-control" name="search" value="{{ current_filters.search }}">
-                                    </div>
-                                    
-                                    <!-- Category -->
-                                    <div class="form-group">
-                                        <label>Category</label>
-                                        <select class="form-control" name="category">
-                                            <option value="">All Categories</option>
-                                            {% for cat in categories %}
-                                                <option value="{{ cat.name }}" {% if current_filters.category == cat.name %}selected{% endif %}>
-                                                    {{ cat.name }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Condition -->
-                                    <div class="form-group">
-                                        <label>Condition</label>
-                                        <select class="form-control" name="condition">
-                                            <option value="">All Conditions</option>
-                                            {% for value, label in conditions.items %}
-                                                <option value="{{ value }}" {% if current_filters.condition == value %}selected{% endif %}>
-                                                    {{ label }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Location -->
-                                    <div class="form-group">
-                                        <label>Location</label>
-                                        <select class="form-control" name="location">
-                                            <option value="">All Locations</option>
-                                            {% for loc in locations %}
-                                                <option value="{{ loc }}" {% if current_filters.location == loc %}selected{% endif %}>
-                                                    {{ loc }}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Price Range -->
-                                    <div class="form-group">
-                                        <label>Price Range</label>
-                                        <div class="row">
-                                            <div class="col-6">
-                                                <input type="number" class="form-control" name="min_price" placeholder="Min" value="{{ current_filters.min_price }}">
-                                            </div>
-                                            <div class="col-6">
-                                                <input type="number" class="form-control" name="max_price" placeholder="Max" value="{{ current_filters.max_price }}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Sort By -->
-                                    <div class="form-group">
-                                        <label>Sort By</label>
-                                        <select class="form-control" name="sort_by">
-                                            <option value="">Default</option>
-                                            <option value="price_asc" {% if current_filters.sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
-                                            <option value="price_desc" {% if current_filters.sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
-                                            <option value="date" {% if current_filters.sort_by == 'date' %}selected{% endif %}>Newest First</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <!-- Group By -->
-                                    <div class="form-group">
-                                        <label>Group By</label>
-                                        <select class="form-control" name="group_by">
-                                            <option value="">No Grouping</option>
-                                            <option value="category" {% if current_filters.group_by == 'category' %}selected{% endif %}>Category</option>
-                                            <option value="condition" {% if current_filters.group_by == 'condition' %}selected{% endif %}>Condition</option>
-                                            <option value="location" {% if current_filters.group_by == 'location' %}selected{% endif %}>Location</option>
-                                            <option value="date" {% if current_filters.group_by == 'date' %}selected{% endif %}>Date</option>
-                                            <option value="price_range" {% if current_filters.group_by == 'price_range' %}selected{% endif %}>Price Range</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <button type="submit" class="btn btn-primary btn-block">Apply Filters</button>
-                                </form>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </aside>
-            
-            <!-- Products -->
-            <main class="col-md-9">
-                {% if grouped_products %}
-                    {% for group_name, group_products in grouped_products.items %}
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="mb-0">{{ group_name }}</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    {% for product in group_products %}
-                                        <div class="col-md-4 mb-4">
-                                            <div class="card h-100">
-                                                {% if product.image %}
-                                                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}">
-                                                {% else %}
-                                                    <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No Image">
-                                                {% endif %}
-                                                <div class="card-body">
-                                                    <h5 class="card-title">{{ product.title }}</h5>
-                                                    <p class="card-text">${{ product.price }}</p>
-                                                    <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">View Details</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% elif products %}
-                    <div class="row">
-                        {% for product in products %}
-                            <div class="col-md-4 mb-4">
-                                <div class="card h-100">
-                                    {% if product.image %}
-                                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}">
-                                    {% else %}
-                                        <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No Image">
-                                    {% endif %}
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ product.title }}</h5>
-                                        <p class="card-text">${{ product.price }}</p>
-                                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary">View Details</a>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        No products found matching your criteria.
-                    </div>
-                {% endif %}
-            </main>
+            <div class="col-12">
+                <h2 class="mb-4">Featured Products</h2>
+            </div>
         </div>
+        <div class="row">
+            {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-shadow">
+                    <div class="position-relative">
+                        <a href="{% url 'product_detail' product.id %}">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No Image" style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                        </a>
+                        {% if product.condition == 'new' %}
+                        <span class="badge bg-success position-absolute top-0 end-0 m-2">New</span>
+                        {% elif product.condition == 'used' %}
+                        <span class="badge bg-warning position-absolute top-0 end-0 m-2">Used</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">
+                            <a href="{% url 'product_detail' product.id %}" class="text-dark text-decoration-none">
+                                {{ product.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-map-marker-alt"></i> {{ product.location }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary mb-0">${{ product.price }}</h5>
+                        </div>
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-primary btn-sm mt-2">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not products %}
+        <div class="alert alert-info">
+            No products found matching your criteria.
+        </div>
+        {% endif %}
     </div>
 </section>
-
-<!-- Fixed Footer -->
-<footer class="footer mt-auto py-3 bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-4">
-                <h5>About Us</h5>
-                <p>Your trusted marketplace for eco-friendly products.</p>
-            </div>
-            <div class="col-md-4">
-                <h5>Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Contact</a></li>
-                </ul>
-            </div>
-            <div class="col-md-4">
-                <h5>Contact Us</h5>
-                <p>Email: info@ecofinds.com<br>Phone: (123) 456-7890</p>
-            </div>
-        </div>
-    </div>
-</footer>
-
-<script>
-// Sidebar Toggle
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('collapsed');
-}
-
-// Auto-hide sidebar on scroll
-let lastScrollTop = 0;
-window.addEventListener('scroll', function() {
-    const sidebar = document.getElementById('sidebar');
-    const st = window.pageYOffset || document.documentElement.scrollTop;
-    
-    if (st > lastScrollTop) {
-        // Scrolling down
-        sidebar.classList.add('collapsed');
-    } else {
-        // Scrolling up
-        sidebar.classList.remove('collapsed');
-    }
-    lastScrollTop = st <= 0 ? 0 : st;
-});
-
-// Show sidebar on hover
-document.addEventListener('mouseover', function(e) {
-    if (e.clientX < 50) { // If mouse is near left edge
-        const sidebar = document.getElementById('sidebar');
-        sidebar.classList.remove('collapsed');
-    }
-});
-</script>
 {% endblock %} 

@@ -10,7 +10,8 @@ from .models import UserProfile, Product, ProductImage, CartItem, Purchase
 from accounts.models import Account
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models.functions import Random, TruncDate, TruncMonth, TruncYear
+from django.db.models.functions import TruncDate, TruncMonth, TruncYear
+
 import paypalrestsdk
 from decimal import Decimal
 import random

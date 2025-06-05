@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-padding">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4">Featured Products</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm hover-shadow">
+                    <div class="position-relative">
+                        <a href="{% url 'store:product_detail' product.category.slug product.slug %}">
+                            <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 200px; object-fit: cover;">
+                        </a>
+                        {% if product.condition == 'new' %}
+                        <span class="badge bg-success position-absolute top-0 end-0 m-2">New</span>
+                        {% elif product.condition == 'used' %}
+                        <span class="badge bg-warning position-absolute top-0 end-0 m-2">Used</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">
+                            <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="text-dark text-decoration-none">
+                                {{ product.title }}
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-map-marker-alt"></i> {{ product.location }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="text-primary mb-0">${{ product.price }}</h5>
+                            <small class="text-muted">
+                                <i class="fas fa-clock"></i> {{ product.created_date|timesince }} ago
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %} 

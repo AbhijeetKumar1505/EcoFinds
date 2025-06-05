@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="mb-4">My Listings</h2>
+                
+                <!-- Active Listings -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Active Listings</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if active_listings %}
+                            <div class="row">
+                                {% for product in active_listings %}
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100">
+                                        <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.title }}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ product.title }}</h5>
+                                            <p class="card-text">₹{{ product.price }}</p>
+                                            <p class="card-text">
+                                                <small class="text-muted">Listed on: {{ product.date|date:"M d, Y" }}</small>
+                                            </p>
+                                            <div class="btn-group">
+                                                <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="btn btn-primary">View</a>
+                                                <a href="{% url 'store:edit_product' product.id %}" class="btn btn-secondary">Edit</a>
+                                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deactivateModal{{ product.id }}">
+                                                    Deactivate
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Deactivate Modal -->
+                                <div class="modal fade" id="deactivateModal{{ product.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Deactivate Listing</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to deactivate "{{ product.title }}"?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{% url 'store:deactivate_product' product.id %}" method="POST" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Deactivate</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No active listings found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Inactive Listings -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Inactive Listings</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if inactive_listings %}
+                            <div class="row">
+                                {% for product in inactive_listings %}
+                                <div class="col-md-4 mb-4">
+                                    <div class="card h-100">
+                                        <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.title }}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ product.title }}</h5>
+                                            <p class="card-text">₹{{ product.price }}</p>
+                                            <p class="card-text">
+                                                <small class="text-muted">Deactivated on: {{ product.date|date:"M d, Y" }}</small>
+                                            </p>
+                                            <div class="btn-group">
+                                                <a href="{% url 'store:product_detail' product.category.slug product.slug %}" class="btn btn-primary">View</a>
+                                                <a href="{% url 'store:edit_product' product.id %}" class="btn btn-secondary">Edit</a>
+                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#activateModal{{ product.id }}">
+                                                    Activate
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Activate Modal -->
+                                <div class="modal fade" id="activateModal{{ product.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Activate Listing</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                Are you sure you want to activate "{{ product.title }}"?
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <form action="{% url 'store:activate_product' product.id %}" method="POST" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success">Activate</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No inactive listings found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

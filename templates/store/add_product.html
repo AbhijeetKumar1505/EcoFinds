@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Product - EcoFinds{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Add New Product</h4>
+                </div>
+                <div class="card-body">
+                    <form id="productForm" action="{% url 'store:add_product' %}" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Product Images -->
+                        <div class="mb-3">
+                            <label class="form-label">Product Images (1-7 images)</label>
+                            <input type="file" name="images" accept="image/*" class="form-control" multiple required id="imageInput">
+                            <small class="text-muted">You can select up to 7 images. First image will be the main product image.</small>
+                        </div>
+
+                        <!-- Image Preview Carousel -->
+                        <div id="imagePreviewCarousel" class="carousel slide mb-3 d-none" data-bs-ride="carousel">
+                            <div class="carousel-inner" id="previewContainer">
+                                <!-- Preview images will be inserted here -->
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#imagePreviewCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#imagePreviewCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+
+                        <!-- Product Details -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Product Name</label>
+                                <input type="text" name="product_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Category</label>
+                                <select name="category" class="form-select" required>
+                                    <option value="">Select Category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.category_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Brand</label>
+                                <input type="text" name="brand" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Condition</label>
+                                <select name="condition" class="form-select" required>
+                                    <option value="">Select Condition</option>
+                                    <option value="new">New</option>
+                                    <option value="like_new">Like New</option>
+                                    <option value="good">Good</option>
+                                    <option value="fair">Fair</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Price</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">₹</span>
+                                    <input type="number" name="price" class="form-control" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" name="location" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="4" required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">Add Product</button>
+                            <a href="{% url 'store:store' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const files = Array.from(e.target.files);
+    const previewContainer = document.getElementById('previewContainer');
+    const carousel = document.getElementById('imagePreviewCarousel');
+    
+    // Validate number of files
+    if (files.length > 7) {
+        alert('You can only upload up to 7 images');
+        this.value = '';
+        return;
+    }
+    
+    if (files.length === 0) {
+        carousel.classList.add('d-none');
+        return;
+    }
+    
+    // Clear previous previews
+    previewContainer.innerHTML = '';
+    
+    // Create preview for each file
+    files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+            div.innerHTML = `
+                <img src="${e.target.result}" class="d-block w-100" style="height: 300px; object-fit: contain;">
+                <div class="carousel-caption">
+                    <small class="bg-dark px-2 py-1 rounded">Image ${index + 1} of ${files.length}</small>
+                </div>
+            `;
+            previewContainer.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+    });
+    
+    // Show carousel if there are images
+    carousel.classList.remove('d-none');
+});
+
+// Form validation
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput.files.length === 0) {
+        e.preventDefault();
+        alert('Please select at least one image');
+    } else if (imageInput.files.length > 7) {
+        e.preventDefault();
+        alert('You can only upload up to 7 images');
+    }
+});
+</script>
+{% endblock %} 

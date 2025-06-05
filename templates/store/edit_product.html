@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Edit Product</h4>
+                        <form action="{% url 'store:edit_product' product.id %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="title">Product Title</label>
+                                    {{ form.title }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="category">Category</label>
+                                    {{ form.category }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="price">Price</label>
+                                    {{ form.price }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="condition">Condition</label>
+                                    {{ form.condition }}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="location">Location</label>
+                                    {{ form.location }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="stock">Stock</label>
+                                    {{ form.stock }}
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description">Description</label>
+                                {{ form.description }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="images">Product Image</label>
+                                {{ form.images }}
+                                {% if product.images %}
+                                <div class="mt-2">
+                                    <img src="{{ product.images.url }}" alt="Current Image" style="max-width: 200px;">
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="latitude">Latitude</label>
+                                    {{ form.latitude }}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="longitude">Longitude</label>
+                                    {{ form.longitude }}
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Update Product</button>
+                                <a href="{% url 'store:my_listings' %}" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

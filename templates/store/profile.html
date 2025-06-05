@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <!-- Profile Card -->
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="profile-picture-container mb-4">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" 
+                                     class="rounded-circle profile-picture" 
+                                     alt="Profile Picture">
+                            {% else %}
+                                <img src="{% static 'images/default-user.jpg' %}" 
+                                     class="rounded-circle profile-picture" 
+                                     alt="Default Profile Picture">
+                            {% endif %}
+                        </div>
+                        <h4 class="card-title mb-2">{{ user.first_name }} {{ user.last_name }}</h4>
+                        <p class="text-muted mb-3">{{ user.email }}</p>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'store:edit_profile' %}" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information Card -->
+                <div class="card shadow-sm mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Contact Information</h5>
+                        <div class="contact-info">
+                            <p class="mb-2">
+                                <i class="fas fa-phone me-2 text-primary"></i>
+                                {{ user.profile.phone_number|default:"Not provided" }}
+                            </p>
+                            <p class="mb-2">
+                                <i class="fas fa-envelope me-2 text-primary"></i>
+                                {{ user.email }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-8">
+                <!-- Address Information -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Address Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Address Line 1:</strong><br>
+                                    {{ user.profile.address_line_1|default:"Not provided" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Address Line 2:</strong><br>
+                                    {{ user.profile.address_line_2|default:"Not provided" }}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>City:</strong><br>
+                                    {{ user.profile.city|default:"Not provided" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>State:</strong><br>
+                                    {{ user.profile.state|default:"Not provided" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Country:</strong><br>
+                                    {{ user.profile.country|default:"Not provided" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Account Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <strong>Member Since:</strong><br>
+                                    {{ user.date_joined|date:"F d, Y" }}
+                                </p>
+                                <p class="mb-2">
+                                    <strong>Last Login:</strong><br>
+                                    {{ user.last_login|date:"F d, Y H:i" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.profile-picture-container {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+.profile-picture {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.card {
+    border: none;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.contact-info p {
+    display: flex;
+    align-items: center;
+}
+
+.contact-info i {
+    width: 20px;
+}
+</style>
+{% endblock %} 

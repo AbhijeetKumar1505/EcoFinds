@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Profile Information</h4>
+                        <div class="text-center mb-4">
+                            {% if userprofile.profile_picture %}
+                                <img src="{{ userprofile.profile_picture.url }}" alt="Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'images/default-profile.png' %}" alt="Default Profile Picture" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <h5>Personal Information</h5>
+                            <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                            <p><strong>Email:</strong> {{ user.email }}</p>
+                            <p><strong>Phone:</strong> {{ userprofile.phone_number }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5>Address</h5>
+                            <p>{{ userprofile.address_line_1 }}</p>
+                            {% if userprofile.address_line_2 %}
+                                <p>{{ userprofile.address_line_2 }}</p>
+                            {% endif %}
+                            <p>{{ userprofile.city }}, {{ userprofile.state }} {{ userprofile.postcode }}</p>
+                            <p>{{ userprofile.country }}</p>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                            <a href="{% url 'accounts:change_password' %}" class="btn btn-secondary">Change Password</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Recent Orders</h4>
+                        {% if orders %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Total</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders %}
+                                        <tr>
+                                            <td>{{ order.order_number }}</td>
+                                            <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                            <td>₹{{ order.order_total }}</td>
+                                            <td>
+                                                <span class="badge {% if order.status == 'Completed' %}bg-success{% elif order.status == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {{ order.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'accounts:order_detail' order.id %}" class="btn btn-sm btn-primary">View</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No orders found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 
