@@ -221,51 +221,61 @@ def submit_review(request, product_id):
                 return redirect(url)
 
 
-@login_required
+@login_required(login_url='login')
 def add_product(request):
-    # Get categories first, before any form processing
-    categories = Category.objects.all().order_by('category_name')
-    category_count = categories.count()
-    
-    if category_count == 0:
-        # Create default categories if none exist
-        default_categories = [
-            'Electronics',
-            'Clothing',
-            'Books',
-            'Home & Garden',
-            'Sports',
-            'Toys',
-            'Beauty',
-            'Automotive',
-            'Health',
-            'Jewelry'
-        ]
-        
-        for cat_name in default_categories:
-            slug = slugify(cat_name)
-            Category.objects.create(
-                category_name=cat_name,
-                slug=slug
-            )
-        
-        messages.success(request, 'Default categories have been created.')
-        categories = Category.objects.all().order_by('category_name')
-
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(commit=False)
-            product.created_by = request.user
-            product.slug = slugify(product.title)
-            product.save()
+        # Get form data
+        title = request.POST.get('product_name')
+        brand = request.POST.get('brand')
+        category_id = request.POST.get('category')
+        description = request.POST.get('description')
+        price = request.POST.get('price')
+        condition = request.POST.get('condition')
+        location = request.POST.get('location')
+        images = request.FILES.getlist('images')
+
+        # Validate required fields
+        if not all([title, brand, category_id, description, price, condition, location]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('store:add_product')
+
+        # Validate at least one image
+        if not images:
+            messages.error(request, 'Please upload at least one product image.')
+            return redirect('store:add_product')
+
+        try:
+            # Create product
+            product = Product.objects.create(
+                title=title,
+                slug=slugify(title),
+                brand=brand,
+                category_id=category_id,
+                description=description,
+                price=price,
+                condition=condition,
+                location=location,
+                is_available=True,
+                created_by=request.user,
+                stock=1,
+                images=images[0]
+            )
+
+            # Save additional images
+            for image in images[1:]:
+                ProductGallery.objects.create(
+                    product=product,
+                    image=image
+                )
+
             messages.success(request, 'Product added successfully!')
             return redirect('store:store')
-    else:
-        form = ProductForm()
-    
+        except Exception as e:
+            messages.error(request, f'Error adding product: {str(e)}')
+            return redirect('store:add_product')
+
+    categories = Category.objects.all()
     context = {
-        'form': form,
         'categories': categories,
     }
     return render(request, 'store/add_product.html', context)
@@ -517,9 +527,14 @@ def remove_cart(request, product_id):
 
 @login_required
 def remove_cart_item(request, product_id):
-    product = Product.objects.get(id=product_id)
-    cart_item = CartItem.objects.get(product=product, user=request.user)
-    cart_item.delete()
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        cart_item = get_object_or_404(CartItem, product=product, user=request.user)
+        cart_item.delete()
+        messages.success(request, 'Item removed from cart successfully.')
+    except Exception as e:
+        messages.error(request, 'Error removing item from cart.')
+    return redirect('store:cart')
 
 
 @login_required
