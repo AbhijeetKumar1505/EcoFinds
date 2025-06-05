@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             name='Product',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=100)),
+                ('name', models.CharField(max_length=100)),
                 ('description', models.TextField()),
                 ('category', models.CharField(max_length=50)),
                 ('price', models.FloatField()),
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
             name='Purchase',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('product_title', models.CharField(max_length=100)),
+                ('product_name', models.CharField(max_length=100)),
                 ('product_price', models.FloatField()),
                 ('product_image', models.CharField(max_length=100)),
                 ('date', models.DateTimeField(default=django.utils.timezone.now)),

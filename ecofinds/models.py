@@ -59,7 +59,7 @@ class Product(models.Model):
         ('new', 'Like New'),
         ('good', 'Good'),
         ('fair', 'Fair'),
-        ('used', 'Used - Acceptable'),
+        ('used', 'Acceptable'),
     ]
     
     LISTING_TYPE_CHOICES = [
@@ -67,7 +67,7 @@ class Product(models.Model):
         ('auction', 'Auction'),
     ]
     
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, null=True, blank=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.ForeignKey('Category', on_delete=models.CASCADE)
@@ -91,25 +91,6 @@ class Product(models.Model):
     current_bid = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     min_bid_increment = models.DecimalField(max_digits=10, decimal_places=2, default=1.00)
     
-    def get_distance(self, user_lat, user_lon):
-        if not all([self.latitude, self.longitude, user_lat, user_lon]):
-            return None
-        
-        from math import radians, sin, cos, sqrt, atan2
-        R = 6371  # Earth's radius in kilometers
-        
-        lat1, lon1 = radians(float(self.latitude)), radians(float(self.longitude))
-        lat2, lon2 = radians(float(user_lat)), radians(float(user_lon))
-        
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
-        distance = R * c
-        
-        return round(distance, 2)
-
     def __str__(self):
         return self.title
 
@@ -178,7 +159,7 @@ class AuctionBid(models.Model):
         ordering = ['-amount']
     
     def __str__(self):
-        return f"Bid of ${self.amount} by {self.bidder.username} on {self.product.title}"
+        return f"Bid of ₹{self.amount} by {self.bidder.username} on {self.product.title}"
 
 class SupportTicket(models.Model):
     STATUS_CHOICES = [

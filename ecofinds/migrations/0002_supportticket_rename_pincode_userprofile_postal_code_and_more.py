@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
         ),
         migrations.RemoveField(
             model_name='purchase',
-            name='product_title',
+            name='product_name',
         ),
         migrations.RemoveField(
             model_name='userprofile',
@@ -279,7 +279,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='product',
-            name='title',
+            name='name',
             field=models.CharField(max_length=200),
         ),
         migrations.AlterField(

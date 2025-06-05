@@ -39,7 +39,7 @@ Requires core.js and SelectBox.js.
             quickElement(
                 'span', title_available, '',
                 'class', 'help help-tooltip help-icon',
-                'title', interpolate(
+                'name', interpolate(
                     gettext(
                         'This is the list of available %s. You may choose some by ' +
                         'selecting them in the box below and then clicking the ' +
@@ -57,7 +57,7 @@ Requires core.js and SelectBox.js.
             quickElement(
                 'span', search_filter_label, '',
                 'class', 'help-tooltip search-label-icon',
-                'title', interpolate(gettext("Type into this box to filter down the list of available %s."), [field_name])
+                'name', interpolate(gettext("Type into this box to filter down the list of available %s."), [field_name])
             );
 
             filter_p.appendChild(document.createTextNode(' '));
@@ -66,15 +66,15 @@ Requires core.js and SelectBox.js.
             filter_input.id = field_id + '_input';
 
             selector_available.appendChild(from_box);
-            const choose_all = quickElement('a', selector_available, gettext('Choose all'), 'title', interpolate(gettext('Click to choose all %s at once.'), [field_name]), 'href', '#', 'id', field_id + '_add_all_link');
+            const choose_all = quickElement('a', selector_available, gettext('Choose all'), 'name', interpolate(gettext('Click to choose all %s at once.'), [field_name]), 'href', '#', 'id', field_id + '_add_all_link');
             choose_all.className = 'selector-chooseall';
 
             // <ul class="selector-chooser">
             const selector_chooser = quickElement('ul', selector_div);
             selector_chooser.className = 'selector-chooser';
-            const add_link = quickElement('a', quickElement('li', selector_chooser), gettext('Choose'), 'title', gettext('Choose'), 'href', '#', 'id', field_id + '_add_link');
+            const add_link = quickElement('a', quickElement('li', selector_chooser), gettext('Choose'), 'name', gettext('Choose'), 'href', '#', 'id', field_id + '_add_link');
             add_link.className = 'selector-add';
-            const remove_link = quickElement('a', quickElement('li', selector_chooser), gettext('Remove'), 'title', gettext('Remove'), 'href', '#', 'id', field_id + '_remove_link');
+            const remove_link = quickElement('a', quickElement('li', selector_chooser), gettext('Remove'), 'name', gettext('Remove'), 'href', '#', 'id', field_id + '_remove_link');
             remove_link.className = 'selector-remove';
 
             // <div class="selector-chosen">
@@ -84,7 +84,7 @@ Requires core.js and SelectBox.js.
             quickElement(
                 'span', title_chosen, '',
                 'class', 'help help-tooltip help-icon',
-                'title', interpolate(
+                'name', interpolate(
                     gettext(
                         'This is the list of chosen %s. You may remove some by ' +
                         'selecting them in the box below and then clicking the ' +
@@ -96,7 +96,7 @@ Requires core.js and SelectBox.js.
 
             const to_box = quickElement('select', selector_chosen, '', 'id', field_id + '_to', 'multiple', '', 'size', from_box.size, 'name', from_box.name);
             to_box.className = 'filtered';
-            const clear_all = quickElement('a', selector_chosen, gettext('Remove all'), 'title', interpolate(gettext('Click to remove all chosen %s at once.'), [field_name]), 'href', '#', 'id', field_id + '_remove_all_link');
+            const clear_all = quickElement('a', selector_chosen, gettext('Remove all'), 'name', interpolate(gettext('Click to remove all chosen %s at once.'), [field_name]), 'href', '#', 'id', field_id + '_remove_all_link');
             clear_all.className = 'selector-clearall';
 
             from_box.name = from_box.name + '_old';

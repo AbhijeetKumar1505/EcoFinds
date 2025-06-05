@@ -2,82 +2,186 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Product, ReviewRating, ProductGallery
 from category.models import Category
 from carts.models import CartItem
-from django.db.models import Q
+from django.db.models import Q, Avg
 
 from carts.views import _cart_id
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponse
-from .forms import ReviewForm
+from .forms import ReviewForm, ProductForm
 from django.contrib import messages
-from orders.models import OrderProduct
+from orders.models import OrderProduct, Order
 from django.http import Http404
+from django.contrib.auth.decorators import login_required
+from django.utils.text import slugify
+import time
+from django.contrib import messages
+from accounts.models import UserProfile
+from django.contrib.auth.models import User
+from wishlist.models import WishlistItem, SearchQuery, PriceAlert
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 def store(request, category_slug=None):
     categories = None
     products = None
+    brands = Product.objects.values_list('brand', flat=True).distinct().order_by('brand')
+    all_categories = Category.objects.all().order_by('category_name')
+    
+    # Get filter parameters
+    category_filter = request.GET.get('category')
+    brand_filter = request.GET.get('brand')
+    condition_filter = request.GET.get('condition')
+    location_filter = request.GET.get('location')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
 
-    if category_slug != None:
+    # Base queryset
+    products = Product.objects.filter(is_available=True)
+
+    # Apply category filter from URL first
+    if category_slug:
         categories = get_object_or_404(Category, slug=category_slug)
-        products = Product.objects.filter(category=categories, is_available=True)
-        paginator = Paginator(products, 1)
-        page = request.GET.get('page')
-        paged_products = paginator.get_page(page)
-        product_count = products.count()
-    else:
-        products = Product.objects.all().filter(is_available=True).order_by('id')
-        paginator = Paginator(products, 3)
-        page = request.GET.get('page')
-        paged_products = paginator.get_page(page)
-        product_count = products.count()
+        products = products.filter(category=categories)
+    
+    # Apply additional filters
+    if category_filter:
+        products = products.filter(category__slug=category_filter)
+    if brand_filter:
+        products = products.filter(brand=brand_filter)
+    if condition_filter:
+        products = products.filter(condition=condition_filter)
+    if location_filter:
+        products = products.filter(location__icontains=location_filter)
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Order products by creation date
+    products = products.order_by('-created_date')
+
+    # Pagination
+    paginator = Paginator(products, 6)
+    page = request.GET.get('page')
+    paged_products = paginator.get_page(page)
+    product_count = products.count()
 
     context = {
         'products': paged_products,
         'product_count': product_count,
+        'all_categories': all_categories,
+        'brands': brands,
+        'conditions': Product.CONDITION_CHOICES,
+        'locations': Product.objects.values_list('location', flat=True).distinct().order_by('location'),
+        'selected_category': category_filter or category_slug,
+        'selected_brand': brand_filter,
+        'selected_condition': condition_filter,
+        'selected_location': location_filter,
+        'min_price': min_price,
+        'max_price': max_price,
     }
     return render(request, 'store/store.html', context)
 
 
-def product_detail(request, product_id=None, category_slug=None, product_slug=None):
+def product_detail(request, category_slug, product_slug):
     try:
-        if product_id:
-            single_product = Product.objects.get(id=product_id)
-        else:
-            single_product = Product.objects.get(category__slug=category_slug, slug=product_slug)
-        
-        # Check if the product is in the user's cart
+        single_product = Product.objects.get(category__slug=category_slug, slug=product_slug)
         in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request), product=single_product).exists()
-        
-        # Get the reviews
-        reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)
-        
-        # Get the product gallery
-        product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
-        
-        # Get related products
-        related_products = Product.objects.filter(category=single_product.category).exclude(id=single_product.id)[:4]
-        
-        context = {
-            'single_product': single_product,
-            'in_cart': in_cart,
-            'reviews': reviews,
-            'product_gallery': product_gallery,
-            'related_products': related_products,
-        }
-        return render(request, 'store/product_detail.html', context)
     except Exception as e:
-        raise Http404("Product not found")
+        raise e
+
+    if request.user.is_authenticated:
+        try:
+            orderproduct = OrderProduct.objects.filter(user=request.user, product_id=single_product.id).exists()
+        except OrderProduct.DoesNotExist:
+            orderproduct = None
+    else:
+        orderproduct = None
+
+    # Get the reviews
+    reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True)
+    
+    # Get seller reviews
+    seller_reviews = ReviewRating.objects.filter(
+        product__created_by=single_product.created_by,
+        status=True
+    ).exclude(product=single_product)
+
+    # Get the product gallery
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
+
+    context = {
+        'single_product': single_product,
+        'in_cart': in_cart,
+        'orderproduct': orderproduct,
+        'reviews': reviews,
+        'seller_reviews': seller_reviews,
+        'product_gallery': product_gallery,
+    }
+    return render(request, 'store/product_detail.html', context)
 
 
 def search(request):
-    if 'keyword' in request.GET:
-        keyword = request.GET['keyword']
-        if keyword:
-            products = Product.objects.order_by('-created_date').filter(Q(description__icontains=keyword) | Q(product_name__icontains=keyword))
+    products = Product.objects.filter(is_available=True)
+    product_count = 0
+    
+    if 'q' in request.GET:
+        q = request.GET['q']
+        if q:
+            products = products.filter(
+                Q(description__icontains=q) | 
+                Q(title__icontains=q) |
+                Q(category__category_name__icontains=q) |
+                Q(brand__icontains=q)
+            )
             product_count = products.count()
+    
+    # Get filter parameters
+    category_filter = request.GET.get('category')
+    brand_filter = request.GET.get('brand')
+    condition_filter = request.GET.get('condition')
+    location_filter = request.GET.get('location')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+
+    # Apply additional filters
+    if category_filter:
+        products = products.filter(category__slug=category_filter)
+    if brand_filter:
+        products = products.filter(brand=brand_filter)
+    if condition_filter:
+        products = products.filter(condition=condition_filter)
+    if location_filter:
+        products = products.filter(location__icontains=location_filter)
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Order products by creation date
+    products = products.order_by('-created_date')
+
+    # Pagination
+    paginator = Paginator(products, 6)
+    page = request.GET.get('page')
+    paged_products = paginator.get_page(page)
+
     context = {
-        'products': products,
+        'products': paged_products,
         'product_count': product_count,
+        'all_categories': Category.objects.all().order_by('category_name'),
+        'brands': Product.objects.values_list('brand', flat=True).distinct().order_by('brand'),
+        'conditions': Product.CONDITION_CHOICES,
+        'locations': Product.objects.values_list('location', flat=True).distinct().order_by('location'),
+        'selected_category': category_filter,
+        'selected_brand': brand_filter,
+        'selected_condition': condition_filter,
+        'selected_location': location_filter,
+        'min_price': min_price,
+        'max_price': max_price,
+        'search_query': request.GET.get('q', ''),
     }
     return render(request, 'store/store.html', context)
 
@@ -104,3 +208,444 @@ def submit_review(request, product_id):
                 data.save()
                 messages.success(request, 'Thank you! Your review has been submitted.')
                 return redirect(url)
+
+
+@login_required
+def add_product(request):
+    # Get categories first, before any form processing
+    categories = Category.objects.all().order_by('category_name')
+    category_count = categories.count()
+    
+    if category_count == 0:
+        # Create default categories if none exist
+        default_categories = [
+            'Electronics',
+            'Clothing',
+            'Books',
+            'Home & Garden',
+            'Sports',
+            'Toys',
+            'Beauty',
+            'Automotive',
+            'Health',
+            'Jewelry'
+        ]
+        
+        for cat_name in default_categories:
+            slug = slugify(cat_name)
+            Category.objects.create(
+                category_name=cat_name,
+                slug=slug
+            )
+        
+        messages.success(request, 'Default categories have been created.')
+        categories = Category.objects.all().order_by('category_name')
+
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.created_by = request.user
+            product.slug = slugify(product.title)
+            product.save()
+            messages.success(request, 'Product added successfully!')
+            return redirect('store:store')
+    else:
+        form = ProductForm()
+    
+    context = {
+        'form': form,
+        'categories': categories,
+    }
+    return render(request, 'store/add_product.html', context)
+
+
+@login_required(login_url='accounts:login')
+def submit_seller_review(request, seller_id):
+    url = request.META.get('HTTP_REFERER')
+    if request.method == 'POST':
+        try:
+            seller = User.objects.get(id=seller_id)
+            reviews = ReviewRating.objects.filter(user=request.user, product__created_by=seller)
+            
+            if reviews.exists():
+                # Update existing review
+                review = reviews.first()
+                review.rating = request.POST.get('rating')
+                review.subject = request.POST.get('subject')
+                review.review = request.POST.get('review')
+                review.status = True
+                review.save()
+                messages.success(request, 'Thank you! Your seller review has been updated.')
+            else:
+                # Create new review
+                ReviewRating.objects.create(
+                    user=request.user,
+                    product=Product.objects.filter(created_by=seller).first(),  # Use first product as reference
+                    rating=request.POST.get('rating'),
+                    subject=request.POST.get('subject'),
+                    review=request.POST.get('review'),
+                    status=True
+                )
+                messages.success(request, 'Thank you! Your seller review has been submitted.')
+        except Exception as e:
+            messages.error(request, 'Your review could not be submitted. Please try again.')
+            print(f"Error submitting seller review: {e}")
+    
+    return redirect(url)
+
+
+@login_required(login_url='accounts:login')
+def wishlist(request):
+    wishlist_items = WishlistItem.objects.filter(user=request.user, is_active=True)
+    search_queries = SearchQuery.objects.filter(user=request.user, is_active=True)
+    price_alerts = PriceAlert.objects.filter(user=request.user, is_active=True)
+    
+    context = {
+        'wishlist_items': wishlist_items,
+        'search_queries': search_queries,
+        'price_alerts': price_alerts,
+    }
+    return render(request, 'store/wishlist.html', context)
+
+
+@login_required(login_url='accounts:login')
+def add_to_wishlist(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    wishlist_item, created = WishlistItem.objects.get_or_create(user=request.user, product=product)
+    
+    if not created:
+        messages.info(request, 'Product is already in your wishlist.')
+    else:
+        messages.success(request, 'Product added to wishlist successfully.')
+    
+    return redirect('store:product_detail', category_slug=product.category.slug, product_slug=product.slug)
+
+
+@login_required(login_url='accounts:login')
+def remove_from_wishlist(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    WishlistItem.objects.filter(user=request.user, product=product).delete()
+    messages.success(request, 'Product removed from wishlist successfully.')
+    return redirect('store:wishlist')
+
+
+@login_required(login_url='accounts:login')
+def save_search_query(request):
+    if request.method == 'POST':
+        query = request.POST.get('query', '')
+        min_price = request.POST.get('min_price')
+        max_price = request.POST.get('max_price')
+        category_id = request.POST.get('category')
+        notification_frequency = request.POST.get('notification_frequency', 'daily')
+
+        # Convert empty strings to None
+        min_price = float(min_price) if min_price else None
+        max_price = float(max_price) if max_price else None
+        category_id = int(category_id) if category_id else None
+
+        # Get or create the search query
+        search_query, created = SearchQuery.objects.get_or_create(
+            user=request.user,
+            query=query,
+            min_price=min_price,
+            max_price=max_price,
+            category_id=category_id,
+            defaults={'notification_frequency': notification_frequency}
+        )
+
+        if not created:
+            # Update existing search query
+            search_query.notification_frequency = notification_frequency
+            search_query.is_active = True
+            search_query.save()
+            messages.info(request, 'Search query updated successfully.')
+        else:
+            messages.success(request, 'Search query saved successfully.')
+
+        return redirect('store:store')
+    
+    return redirect('store:store')
+
+
+@login_required(login_url='accounts:login')
+def add_price_alert(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, id=product_id)
+        target_price = request.POST.get('target_price')
+        notification_frequency = request.POST.get('notification_frequency', 'daily')
+
+        if target_price:
+            target_price = float(target_price)
+            
+            # Validate target price is less than current price
+            if target_price >= product.price:
+                messages.error(request, 'Target price must be less than current price.')
+                return redirect('store:product_detail', category_slug=product.category.slug, product_slug=product.slug)
+
+            # Get or create the price alert
+            price_alert, created = PriceAlert.objects.get_or_create(
+                user=request.user,
+                product=product,
+                defaults={
+                    'target_price': target_price,
+                    'notification_frequency': notification_frequency
+                }
+            )
+
+            if not created:
+                # Update existing price alert
+                price_alert.target_price = target_price
+                price_alert.notification_frequency = notification_frequency
+                price_alert.is_active = True
+                price_alert.save()
+                messages.info(request, 'Price alert updated successfully.')
+            else:
+                messages.success(request, 'Price alert set successfully.')
+
+        return redirect('store:product_detail', category_slug=product.category.slug, product_slug=product.slug)
+    
+    return redirect('store:store')
+
+
+@login_required
+def my_listings(request):
+    # Get all products listed by the current user
+    active_listings = Product.objects.filter(created_by=request.user, is_available=True)
+    inactive_listings = Product.objects.filter(created_by=request.user, is_available=False)
+    
+    context = {
+        'active_listings': active_listings,
+        'inactive_listings': inactive_listings,
+    }
+    return render(request, 'store/my_listings.html', context)
+
+
+@login_required
+def edit_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id, created_by=request.user)
+    
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES, instance=product)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Product updated successfully!')
+            return redirect('store:my_listings')
+    else:
+        form = ProductForm(instance=product)
+    
+    context = {
+        'form': form,
+        'product': product,
+    }
+    return render(request, 'store/edit_product.html', context)
+
+
+def home(request):
+    products = Product.objects.filter(is_available=True).order_by('-created_date')[:8]
+    categories = Category.objects.all()[:6]
+    
+    context = {
+        'products': products,
+        'categories': categories,
+    }
+    return render(request, 'store/home.html', context)
+
+
+@login_required
+def cart(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    total = 0
+    quantity = 0
+    
+    for cart_item in cart_items:
+        total += (cart_item.product.price * cart_item.quantity)
+        quantity += cart_item.quantity
+    
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'quantity': quantity,
+    }
+    return render(request, 'store/cart.html', context)
+
+
+@login_required
+def add_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    
+    # Check if user is trying to buy their own product
+    if product.created_by == request.user:
+        messages.error(request, "You cannot buy your own listings.")
+        return redirect('store:product_detail', category_slug=product.category.slug, product_slug=product.slug)
+    
+    try:
+        cart_item = CartItem.objects.get(product=product, user=request.user)
+        cart_item.quantity += 1
+        cart_item.save()
+    except CartItem.DoesNotExist:
+        CartItem.objects.create(
+            product=product,
+            user=request.user,
+            quantity=1
+        )
+    return redirect('store:cart')
+
+
+@login_required
+def remove_cart(request, product_id):
+    product = Product.objects.get(id=product_id)
+    cart_item = CartItem.objects.get(product=product, user=request.user)
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+        cart_item.save()
+    else:
+        cart_item.delete()
+    return redirect('store:cart')
+
+
+@login_required
+def remove_cart_item(request, product_id):
+    product = Product.objects.get(id=product_id)
+    cart_item = CartItem.objects.get(product=product, user=request.user)
+    cart_item.delete()
+
+
+@login_required
+def checkout(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    total = 0
+    quantity = 0
+    
+    for cart_item in cart_items:
+        total += (cart_item.product.price * cart_item.quantity)
+        quantity += cart_item.quantity
+    
+    if request.method == 'POST':
+        # Process the order
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=total,
+            shipping_address=request.POST.get('shipping_address'),
+            status='pending'
+        )
+        
+        for cart_item in cart_items:
+            OrderProduct.objects.create(
+                order=order,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                price=cart_item.product.price
+            )
+        
+        # Clear the cart
+        cart_items.delete()
+        
+        messages.success(request, 'Your order has been placed successfully!')
+        return redirect('store:orders')
+    
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+        'quantity': quantity,
+    }
+    return render(request, 'store/checkout.html', context)
+
+
+@login_required
+def profile(request):
+    user = request.user
+    # My Listings
+    my_listings = Product.objects.filter(created_by=user)
+    # My Orders (as buyer)
+    my_orders = []
+    try:
+        from orders.models import Order, OrderProduct
+        my_orders = Order.objects.filter(user=user, is_ordered=True)
+    except Exception:
+        pass
+    # Seller/Buyer Ratings
+    seller_reviews = ReviewRating.objects.filter(product__created_by=user)
+    buyer_reviews = ReviewRating.objects.filter(user=user)
+    seller_rating = seller_reviews.aggregate(Avg('rating'))['rating__avg']
+    buyer_rating = buyer_reviews.aggregate(Avg('rating'))['rating__avg']
+    context = {
+        'my_listings': my_listings,
+        'my_orders': my_orders,
+        'seller_rating': seller_rating,
+        'buyer_rating': buyer_rating,
+        'user': user,
+    }
+    return render(request, 'store/profile.html', context)
+
+
+@login_required
+def orders(request):
+    try:
+        from orders.models import Order
+        orders = Order.objects.filter(user=request.user, is_ordered=True).order_by('-created_at')
+        context = {
+            'orders': orders,
+        }
+        return render(request, 'store/orders.html', context)
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect('store:profile')
+
+
+@login_required
+def deactivate_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id, created_by=request.user)
+    if request.method == 'POST':
+        product.is_available = False
+        product.save()
+        messages.success(request, 'Product has been deactivated successfully.')
+    return redirect('store:my_listings')
+
+
+@login_required
+def edit_profile(request):
+    user = request.user
+    try:
+        profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+
+    if request.method == 'POST':
+        # Update user information
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.save()
+
+        # Update profile information
+        profile.phone_number = request.POST.get('phone_number', '')
+        profile.address_line_1 = request.POST.get('address_line_1', '')
+        profile.address_line_2 = request.POST.get('address_line_2', '')
+        profile.city = request.POST.get('city', '')
+        profile.state = request.POST.get('state', '')
+        profile.country = request.POST.get('country', '')
+        
+        # Handle profile picture upload
+        if 'profile_picture' in request.FILES:
+            profile.profile_picture = request.FILES['profile_picture']
+        
+        profile.save()
+        messages.success(request, 'Your profile has been updated successfully!')
+        return redirect('store:profile')
+
+    context = {
+        'user': user,
+        'profile': profile,
+    }
+    return render(request, 'store/edit_profile.html', context)
+
+
+@login_required
+def activate_product(request, product_id):
+    product = get_object_or_404(Product, id=product_id, created_by=request.user)
+    if request.method == 'POST':
+        product.is_available = True
+        product.save()
+        messages.success(request, 'Product has been activated successfully.')
+    return redirect('store:my_listings')

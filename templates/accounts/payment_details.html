@@ -26,7 +26,7 @@
                 </div>
             </div>
 
-            <form action="{% url 'payment_details' %}" method="POST" class="needs-validation" novalidate>
+            <form action="{% url 'accounts:payment_details' %}" method="POST" class="needs-validation" novalidate>
                 {% csrf_token %}
                 
                 <!-- Payment Information -->

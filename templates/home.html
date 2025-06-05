@@ -1,5 +1,3 @@
-
-
 {% extends 'base.html' %}
 {% load static %}
 
@@ -24,7 +22,7 @@
 <div class="container">
 
 <header class="section-heading">
-	<a href="{% url 'store' %}" class="btn btn-outline-primary float-right">See all</a>
+	<a href="{% url 'store:store' %}" class="btn btn-outline-primary float-right">See all</a>
 	<h3 class="section-title">Popular products</h3>
 </header><!-- sect-heading -->
 
@@ -36,7 +34,7 @@
 			<a href="{{ product.get_url }}" class="img-wrap"> <img src="{{ product.images.url }}"> </a>
 			<figcaption class="info-wrap">
 				<a href="{{ product.get_url }}" class="title">{{ product.product_name }}</a>
-				<div class="price mt-1">$ {{ product.price }}</div> <!-- price-wrap.// -->
+				<div class="price mt-1">$ {{ product.price }}</div>
 				<div class="rating-star">
 					<span>
 						<i class="fa fa-star{% if product.averageReview < 0.5 %}-o{% elif product.averageReview >= 0.5 and product.averageReview < 1 %}-half-o {% endif %}" aria-hidden="true"></i>
@@ -44,7 +42,27 @@
 						<i class="fa fa-star{% if product.averageReview < 2.5 %}-o{% elif product.averageReview >= 2.5 and product.averageReview < 3 %}-half-o {% endif %}" aria-hidden="true"></i>
 						<i class="fa fa-star{% if product.averageReview < 3.5 %}-o{% elif product.averageReview >= 3.5 and product.averageReview < 4 %}-half-o {% endif %}" aria-hidden="true"></i>
 						<i class="fa fa-star{% if product.averageReview < 4.5 %}-o{% elif product.averageReview >= 4.5 and product.averageReview < 5 %}-half-o {% endif %}" aria-hidden="true"></i>
-						</span>
+					</span>
+				</div>
+				
+				<!-- Seller Review Section -->
+				<div class="seller-review">
+					<div class="seller-info">
+						<img src="{{ product.user.userprofile.profile_picture.url }}" alt="{{ product.user.username }}" class="seller-avatar">
+						<div class="seller-name">{{ product.user.username }}</div>
+						<div class="seller-rating">
+							<div class="rating-star">
+								<span>
+									<i class="fa fa-star{% if product.user.userprofile.average_seller_rating < 0.5 %}-o{% elif product.user.userprofile.average_seller_rating >= 0.5 and product.user.userprofile.average_seller_rating < 1 %}-half-o {% endif %}" aria-hidden="true"></i>
+									<i class="fa fa-star{% if product.user.userprofile.average_seller_rating < 1.5 %}-o{% elif product.user.userprofile.average_seller_rating >= 1.5 and product.user.userprofile.average_seller_rating < 2 %}-half-o {% endif %}" aria-hidden="true"></i>
+									<i class="fa fa-star{% if product.user.userprofile.average_seller_rating < 2.5 %}-o{% elif product.user.userprofile.average_seller_rating >= 2.5 and product.user.userprofile.average_seller_rating < 3 %}-half-o {% endif %}" aria-hidden="true"></i>
+									<i class="fa fa-star{% if product.user.userprofile.average_seller_rating < 3.5 %}-o{% elif product.user.userprofile.average_seller_rating >= 3.5 and product.user.userprofile.average_seller_rating < 4 %}-half-o {% endif %}" aria-hidden="true"></i>
+									<i class="fa fa-star{% if product.user.userprofile.average_seller_rating < 4.5 %}-o{% elif product.user.userprofile.average_seller_rating >= 4.5 and product.user.userprofile.average_seller_rating < 5 %}-half-o {% endif %}" aria-hidden="true"></i>
+								</span>
+							</div>
+							<div class="review-count">{{ product.user.userprofile.total_seller_reviews }} reviews</div>
+						</div>
+					</div>
 				</div>
 			</figcaption>
 		</div>

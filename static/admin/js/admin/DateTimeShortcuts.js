@@ -128,7 +128,7 @@
             quickElement(
                 'span', clock_link, '',
                 'class', 'clock-icon',
-                'title', gettext('Choose a Time')
+                'name', gettext('Choose a Time')
             );
             shortcuts_span.appendChild(document.createTextNode('\u00A0'));
             shortcuts_span.appendChild(now_link);
@@ -255,7 +255,7 @@
             quickElement(
                 'span', cal_link, '',
                 'class', 'date-icon',
-                'title', gettext('Choose a Date')
+                'name', gettext('Choose a Date')
             );
             shortcuts_span.appendChild(document.createTextNode('\u00A0'));
             shortcuts_span.appendChild(today_link);

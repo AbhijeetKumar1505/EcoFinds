@@ -142,6 +142,8 @@ class UserProfile(models.Model):
     branch_name = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=timezone.now)
     modified_at = models.DateTimeField(auto_now=timezone.now)
+    average_seller_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    total_seller_reviews = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user.email

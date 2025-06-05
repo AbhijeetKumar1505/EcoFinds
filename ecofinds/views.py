@@ -151,30 +151,18 @@ def verify_email(request, token):
     except Account.DoesNotExist:
         messages.error(request, 'Invalid user.')
     
-    return redirect('login')
+    return redirect('accounts:login')
 
 def get_recommended_products(user, limit=5):
-    if not user.is_authenticated:
-        return Product.objects.order_by(Random())[:limit]
-    
     # Get user's purchase history
-    purchased_categories = Purchase.objects.filter(user=user).values_list('product__category', flat=True)
+    purchased_products = Purchase.objects.filter(user=user).values_list('product_title', flat=True)
     
-    # Get user's saved items
-    saved_categories = user.saved_products.values_list('category', flat=True)
-    
-    # Combine categories
-    user_categories = list(purchased_categories) + list(saved_categories)
-    
-    if not user_categories:
-        return Product.objects.order_by(Random())[:limit]
-    
-    # Get products from user's preferred categories
+    # Get products in the same categories as purchased products
     recommended = Product.objects.filter(
-        category__in=user_categories
+        title__in=purchased_products
     ).exclude(
-        owner=user  # Exclude user's own products
-    ).order_by(Random())[:limit]
+        owner=user
+    ).order_by('-views')[:limit]
     
     return recommended
 
@@ -187,56 +175,12 @@ def get_trending_sellers(limit=5):
         product_count__gt=0
     ).order_by('-rating', '-product_count')[:limit]
 
-def login_view(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        if not email or not password:
-            messages.error(request, 'Please provide both email and password')
-            return redirect('login')
-
-        user = authenticate(request, email=email, password=password)
-        if user is None:
-            user = authenticate(request, username=email, password=password)
-
-        if user is not None:
-            if not user.is_active:
-                messages.error(request, 'Your account is not activated. Please check your email for activation link.')
-                return redirect('login')
-
-            try:
-                cart = Cart.objects.get(cart_id=_cart_id(request))
-                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
-                if is_cart_item_exists:
-                    cart_item = CartItem.objects.filter(cart=cart)
-                    for item in cart_item:
-                        item.user = user
-                        item.save()
-            except:
-                pass
-
-            login(request, user)
-            messages.success(request, 'You are now logged in.')
-            url = request.META.get('HTTP_REFERER')
-            try:
-                query = requests.utils.urlparse(url).query
-                params = dict(x.split('=') for x in query.split('&'))
-                if 'next' in params:
-                    nextPage = params['next']
-                    return redirect(nextPage)
-            except:
-                return redirect('home')
-        else:
-            messages.error(request, 'Invalid login credentials')
-            return redirect('login')
-    return render(request, 'ecofinds/login.html')
-
 def home(request):
-    products = Product.objects.all()
+    products = Product.objects.all().filter(is_active=True)
+    categories = Category.objects.all()
     
     # Get filter parameters
-    search_query = request.GET.get('search', '')
+    search = request.GET.get('search', '')
     category = request.GET.get('category', '')
     condition = request.GET.get('condition', '')
     location = request.GET.get('location', '')
@@ -244,109 +188,83 @@ def home(request):
     max_price = request.GET.get('max_price', '')
     sort_by = request.GET.get('sort_by', '')
     group_by = request.GET.get('group_by', '')
-    
+
     # Apply filters
-    if search_query:
-        products = products.filter(title__icontains=search_query)
+    if search:
+        products = products.filter(
+            Q(title__icontains=search) |
+            Q(description__icontains=search)
+        )
+    
     if category:
-        products = products.filter(category__name=category)
+        try:
+            category_obj = Category.objects.get(id=category)
+            products = products.filter(category=category_obj)
+        except Category.DoesNotExist:
+            pass
+
     if condition:
         products = products.filter(condition=condition)
+    
     if location:
         products = products.filter(location__icontains=location)
+    
     if min_price:
-        products = products.filter(price__gte=Decimal(min_price))
+        products = products.filter(price__gte=min_price)
+    
     if max_price:
-        products = products.filter(price__lte=Decimal(max_price))
-    
+        products = products.filter(price__lte=max_price)
+
     # Apply sorting
-    if sort_by == 'price_asc':
-        products = products.order_by('price')
-    elif sort_by == 'price_desc':
-        products = products.order_by('-price')
-    elif sort_by == 'views':
-        products = products.order_by('-views')
-    elif sort_by == 'date':
-        products = products.order_by('-date')
-    
-    # Apply grouping
+    if sort_by:
+        if sort_by == 'price_asc':
+            products = products.order_by('price')
+        elif sort_by == 'price_desc':
+            products = products.order_by('-price')
+        elif sort_by == 'newest':
+            products = products.order_by('-date')
+        elif sort_by == 'popular':
+            products = products.order_by('-views')
+
+    # Group products if requested
     grouped_products = {}
     if group_by:
         if group_by == 'category':
             # Get all categories that have products
-            categories = Category.objects.all()
-            for cat in categories:
+            categories_with_products = Category.objects.filter(product__in=products).distinct()
+            for cat in categories_with_products:
                 # Get products for this category
                 category_products = products.filter(category=cat)
                 if category_products.exists():
-                    grouped_products[cat.name] = category_products
-                    print(f"Category {cat.name} has {category_products.count()} products")  # Debug print
-        
+                    grouped_products[cat] = category_products
         elif group_by == 'condition':
-            for condition_value, condition_label in Product.CONDITION_CHOICES:
-                condition_products = products.filter(condition=condition_value)
+            conditions = products.values_list('condition', flat=True).distinct()
+            for cond in conditions:
+                condition_products = products.filter(condition=cond)
                 if condition_products.exists():
-                    grouped_products[condition_label] = condition_products
-        
+                    grouped_products[cond] = condition_products
         elif group_by == 'location':
             locations = products.values_list('location', flat=True).distinct()
             for loc in locations:
                 location_products = products.filter(location=loc)
                 if location_products.exists():
                     grouped_products[loc] = location_products
-        
-        elif group_by == 'date':
-            # Group by date added
-            dates = products.dates('date', 'day')
-            for date in dates:
-                date_products = products.filter(date__date=date)
-                if date_products.exists():
-                    grouped_products[date.strftime('%Y-%m-%d')] = date_products
-        
-        elif group_by == 'price_range':
-            # Group by price ranges
-            price_ranges = {
-                'Under $10': (Decimal('0'), Decimal('10')),
-                '$10 - $25': (Decimal('10'), Decimal('25')),
-                '$25 - $50': (Decimal('25'), Decimal('50')),
-                '$50 - $100': (Decimal('50'), Decimal('100')),
-                'Over $100': (Decimal('100'), Decimal('999999.99'))
-            }
-            
-            for range_name, (min_price, max_price) in price_ranges.items():
-                range_products = products.filter(price__gte=min_price, price__lt=max_price)
-                if range_products.exists():
-                    grouped_products[range_name] = range_products
-    
-    # Get unique values for filters
-    categories = Category.objects.all()
-    conditions = dict(Product.CONDITION_CHOICES)
-    locations = Product.objects.values_list('location', flat=True).distinct()
-    
-    # Debug prints
-    print(f"Total products: {products.count()}")
-    print(f"Total categories: {categories.count()}")
-    print(f"Grouped products: {len(grouped_products)}")
-    
+
     context = {
-        'products': products if not group_by else None,
-        'grouped_products': grouped_products if group_by else None,
+        'products': products,
         'categories': categories,
-        'conditions': conditions,
-        'locations': locations,
-        'current_filters': {
-            'search': search_query,
-            'category': category,
-            'condition': condition,
-            'location': location,
-            'min_price': min_price,
-            'max_price': max_price,
-            'sort_by': sort_by,
-            'group_by': group_by,
-        }
+        'grouped_products': grouped_products,
+        'group_by': group_by,
+        'search': search,
+        'category': category,
+        'condition': condition,
+        'location': location,
+        'min_price': min_price,
+        'max_price': max_price,
+        'sort_by': sort_by,
     }
     
-    return render(request, 'ecofinds/home.html', context)
+    return render(request, 'home.html', context)
 
 def signup(request):
     if request.method == 'POST':
@@ -363,11 +281,6 @@ def signup(request):
             messages.success(request, "Account created! Please login.")
             return redirect('login')
     return render(request, 'ecofinds/signup.html')
-
-@login_required
-def logout_view(request):
-    logout(request)
-    return redirect('login')
 
 @login_required
 def profile(request):

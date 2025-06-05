@@ -18,26 +18,24 @@
         <i class="fa fa-bars"></i> All category
       </button>
       <div class="dropdown-menu">
-        <a class="dropdown-item" href="{% url 'store' %}">All Products </a>
+        <a class="dropdown-item" href="{% url 'store:store' %}">All Products </a>
         {% for category in links %}
           <a class="dropdown-item" href="{{ category.get_url }}">{{ category.category_name }} </a>
         {% endfor %}
       </div>
     </div>  <!-- category-wrap.// -->
   </div> <!-- col.// -->
-  <a href="{% url 'store' %}" class="btn btn-outline-primary">Store</a>
+  <a href="{% url 'store:store' %}" class="btn btn-outline-primary">Store</a>
   <div class="col-lg  col-md-6 col-sm-12 col">
-    <form action="{% url 'search' %}" class="search" method='GET'>
-      <div class="input-group w-100">
-          <input type="text" class="form-control" style="width:60%;" placeholder="Search" name="keyword" required>
-
-          <div class="input-group-append">
-            <button class="btn btn-primary" type="submit">
-              <i class="fa fa-search"></i>
-            </button>
-          </div>
-        </div>
-    </form> <!-- search-wrap .end// -->
+    <form class="d-flex me-3" action="{% url 'store:search' %}" method="GET">
+      <input class="form-control me-2" type="search" name="keyword" placeholder="Search" aria-label="Search">
+      <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
+    {% if user.is_authenticated %}
+      <a href="{% url 'store:add_product' %}" class="btn btn-primary me-2">Add Product</a>
+      <div class="dropdown">
+      </div>
+    {% endif %}
   </div> <!-- col.// -->
   <div class="col-lg-3 col-sm-6 col-8 order-2 order-lg-3">
         <div class="d-flex justify-content-end mb-3 mb-lg-0">
@@ -45,7 +43,7 @@
           <div class="widget-header">
             <small class="title text-muted">Welcome guest!</small>
             <div>
-              <a href="{% url 'login' %}">Sign in</a> <span class="dark-transp"> | </span>
+              <a href="{% url 'accounts:login' %}">Sign in</a> <span class="dark-transp"> | </span>
               <a href="{% url 'register' %}"> Register</a>
             </div>
           </div>

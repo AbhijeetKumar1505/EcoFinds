@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Product, Variation, ReviewRating, ProductGallery, Category
+from .models import Product, ProductGallery, ReviewRating, Variation
+from category.models import Category
 import admin_thumbnails
 
 @admin_thumbnails.thumbnail('image')
@@ -7,22 +8,25 @@ class ProductGalleryInline(admin.TabularInline):
     model = ProductGallery
     extra = 1
 
+@admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'price', 'stock', 'category', 'brand', 'condition', 'is_available', 'created_date')
+    list_display = ('title', 'brand', 'category', 'price', 'stock', 'condition', 'is_available', 'created_date')
+    list_filter = ('category', 'brand', 'condition', 'is_available', 'created_date')
+    list_editable = ('is_available', 'price', 'stock')
     prepopulated_fields = {'slug': ('title',)}
     inlines = [ProductGalleryInline]
-    list_editable = ('is_available',)
-    list_filter = ('category', 'brand', 'condition', 'is_available')
-    search_fields = ('title', 'description', 'brand')
+    search_fields = ('title', 'brand', 'description')
     list_per_page = 20
 
-class VariationAdmin(admin.ModelAdmin):
-    list_display = ('product', 'variation_category', 'variation_value', 'is_active')
-    list_editable = ('is_active',)
-    list_filter = ('product', 'variation_category', 'variation_value')
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('category_name', 'slug')
+    prepopulated_fields = {'slug': ('category_name',)}
 
-admin.site.register(Product, ProductAdmin)
-admin.site.register(Variation, VariationAdmin)
-admin.site.register(ReviewRating)
-admin.site.register(ProductGallery)
-#admin.site.register(Category)
+@admin.register(ReviewRating)
+class ReviewRatingAdmin(admin.ModelAdmin):
+    list_display = ('product', 'user', 'rating', 'created_at')
+    list_filter = ('rating', 'created_at')
+    search_fields = ('product__title', 'user__email', 'review')
+
+admin.site.register(Variation)

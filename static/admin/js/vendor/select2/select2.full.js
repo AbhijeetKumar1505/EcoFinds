@@ -1430,7 +1430,7 @@ S2.define('select2/selection/base',[
       this._tabindex = this.$element.attr('tabindex');
     }
 
-    $selection.attr('title', this.$element.attr('title'));
+    $selection.attr('name', this.$element.attr('name'));
     $selection.attr('tabindex', this._tabindex);
     $selection.attr('aria-disabled', 'false');
 
@@ -1649,7 +1649,7 @@ S2.define('select2/selection/single',[
   SingleSelection.prototype.clear = function () {
     var $rendered = this.$selection.find('.select2-selection__rendered');
     $rendered.empty();
-    $rendered.removeAttr('title'); // clear tooltip on empty
+    $rendered.removeAttr('name'); // clear tooltip on empty
   };
 
   SingleSelection.prototype.display = function (data, container) {
@@ -1679,9 +1679,9 @@ S2.define('select2/selection/single',[
     var title = selection.title || selection.text;
 
     if (title) {
-      $rendered.attr('title', title);
+      $rendered.attr('name', title);
     } else {
-      $rendered.removeAttr('title');
+      $rendered.removeAttr('name');
     }
   };
 
@@ -1747,7 +1747,7 @@ S2.define('select2/selection/multiple',[
   MultipleSelection.prototype.clear = function () {
     var $rendered = this.$selection.find('.select2-selection__rendered');
     $rendered.empty();
-    $rendered.removeAttr('title');
+    $rendered.removeAttr('name');
   };
 
   MultipleSelection.prototype.display = function (data, container) {
@@ -1789,7 +1789,7 @@ S2.define('select2/selection/multiple',[
       var title = selection.title || selection.text;
 
       if (title) {
-        $selection.attr('title', title);
+        $selection.attr('name', title);
       }
 
       Utils.StoreData($selection[0], 'data', selection);
@@ -3398,13 +3398,13 @@ S2.define('select2/data/select',[
         text: $option.text(),
         disabled: $option.prop('disabled'),
         selected: $option.prop('selected'),
-        title: $option.prop('title')
+        title: $option.prop('name')
       };
     } else if ($option.is('optgroup')) {
       data = {
         text: $option.prop('label'),
         children: [],
-        title: $option.prop('title')
+        title: $option.prop('name')
       };
 
       var $children = $option.children('option');

@@ -3,9 +3,13 @@ from store.models import Product, Variation
 from .models import Cart, CartItem
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from orders.models import Order, OrderProduct
+import json
 
 # Create your views here.
-from django.http import HttpResponse
 
 def _cart_id(request):
     cart = request.session.session_key
@@ -161,6 +165,7 @@ def remove_cart_item(request, product_id, cart_item_id):
     return redirect('cart')
 
 
+@login_required(login_url='accounts:login')
 def cart(request, total=0, quantity=0, cart_items=None):
     try:
         tax = 0
@@ -188,7 +193,7 @@ def cart(request, total=0, quantity=0, cart_items=None):
     return render(request, 'store/cart.html', context)
 
 
-@login_required(login_url='login')
+@login_required(login_url='accounts:login')
 def checkout(request, total=0, quantity=0, cart_items=None):
     try:
         tax = 0
@@ -214,3 +219,53 @@ def checkout(request, total=0, quantity=0, cart_items=None):
         'grand_total': grand_total,
     }
     return render(request, 'store/checkout.html', context)
+
+@login_required
+@require_POST
+@csrf_exempt
+def process_payment(request):
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('orderID')
+        payment_id = data.get('paymentID')
+        payer_id = data.get('payerID')
+        amount = data.get('amount')
+
+        # Get the current cart
+        cart = Cart.objects.get(cart_id=_cart_id(request))
+        cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+        
+        # Create order
+        order = Order.objects.create(
+            user=request.user,
+            payment_method='PayPal',
+            payment_id=payment_id,
+            order_number=order_id,
+            order_total=amount,
+            tax=float(amount) * 0.18,  # 18% tax
+            status='Completed'
+        )
+
+        # Create order products
+        for cart_item in cart_items:
+            OrderProduct.objects.create(
+                order=order,
+                user=request.user,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                product_price=cart_item.product.price,
+                ordered=True
+            )
+
+        # Clear the cart
+        cart_items.delete()
+
+        return JsonResponse({
+            'success': True,
+            'redirect_url': f'/orders/order_complete/{order.order_number}/'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
