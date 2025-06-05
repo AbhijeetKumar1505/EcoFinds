@@ -1,5 +1,5 @@
 ## EcoFinds – Empowering Sustainable Consumption through a Second-Hand Marketplace" 
-Built with Flask, it features a user-friendly interface, a robust database, and a responsive design.
+Built with Django, it features a user-friendly interface, a robust database, and a responsive design.
 
 ## Table of Contents
 
