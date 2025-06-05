@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.db.models import Q
 
 app_name = 'store'
 
@@ -29,5 +30,8 @@ urlpatterns = [
     path('edit-profile/', views.edit_profile, name='edit_profile'),
     path('deactivate-product/<int:product_id>/', views.deactivate_product, name='deactivate_product'),
     path('activate-product/<int:product_id>/', views.activate_product, name='activate_product'),
-    #path('orders/', views.orders, name='orders'),
+    path('auctions/', views.auction_list, name='auction_list'),
+    path('auction/<slug:product_slug>/', views.auction_detail, name='auction_detail'),
+    path('create-auction/<int:product_id>/', views.create_auction, name='create_auction'),
+    path('my-bids/', views.my_bids, name='my_bids'),
 ]

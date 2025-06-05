@@ -12,11 +12,15 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMessage
+from django.core.mail import send_mail
+from django.utils.html import strip_tags
+from django.conf import settings
 
 from carts.views import _cart_id
 from carts.models import Cart, CartItem
 import requests
+from django.utils import timezone
+import random
 
 
 def register(request):
@@ -55,32 +59,42 @@ def register(request):
                 other_language=other_language if preferred_language == 'other' else ''
             )
 
-            # Generate activation token
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            # Generate verification code (6 digits)
+            verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
             
-            # Store token in session for verification
-            request.session['activation_token'] = token
-            request.session['activation_uid'] = uid
+            # Store verification code in user model
+            user.email_verification_token = verification_code
+            user.email_verification_token_created = timezone.now()
+            user.save()
 
             # Send verification email
-            current_site = get_current_site(request)
-            mail_subject = 'Please activate your account'
-            message = render_to_string('accounts/account_verification_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': uid,
-                'token': token,
-            })
-            to_email = email
-            send_email = EmailMessage(mail_subject, message, to=[to_email])
-            send_email.send()
+            mail_subject = 'Your EcoFinds Account Verification Code'
+            message = f"""
+Hello {first_name},
 
-            # Show success message and redirect to login
-            messages.success(request, 'Registration successful! Please check your email to activate your account.')
-            return redirect('accounts:login')
+Thank you for creating an account with EcoFinds!
+
+Your verification code is: {verification_code}
+
+Please enter this code to verify your email address. This code will expire in 24 hours.
+
+If you did not create an account with EcoFinds, please ignore this email.
+
+Best regards,
+The EcoFinds Team
+"""
+            to_email = email
+            send_mail(
+                subject=mail_subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to_email],
+                fail_silently=False,
+            )
+
+            messages.success(request, 'Registration successful! Please check your email for the verification code.')
+            return redirect('accounts:verify_email')
         else:
-            # If form is not valid, show error messages
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -91,6 +105,35 @@ def register(request):
         'form': form,
     }
     return render(request, 'accounts/register.html', context)
+
+
+def verify_email(request):
+    if request.method == 'POST':
+        verification_code = request.POST.get('verification_code')
+        email = request.POST.get('email')
+        
+        try:
+            user = Account.objects.get(email=email)
+            
+            # Check if code is expired (24 hours)
+            if user.email_verification_token_created and (timezone.now() - user.email_verification_token_created).days > 1:
+                messages.error(request, 'Verification code has expired. Please request a new one.')
+                return redirect('accounts:register')
+            
+            if user.email_verification_token == verification_code:
+                user.is_active = True
+                user.is_email_verified = True
+                user.email_verification_token = None
+                user.email_verification_token_created = None
+                user.save()
+                messages.success(request, 'Email verified successfully! You can now login.')
+                return redirect('accounts:login')
+            else:
+                messages.error(request, 'Invalid verification code. Please try again.')
+        except Account.DoesNotExist:
+            messages.error(request, 'Invalid email address.')
+    
+    return render(request, 'accounts/verify_email.html')
 
 
 @login_required(login_url = 'login')
@@ -108,10 +151,18 @@ def activate(request, uidb64, token):
         user = None
 
     if user is not None and default_token_generator.check_token(user, token):
+        # Check if token is expired (24 hours)
+        if user.email_verification_token_created and (timezone.now() - user.email_verification_token_created).days > 1:
+            messages.error(request, 'Activation link has expired. Please request a new one.')
+            return redirect('accounts:login')
+            
         user.is_active = True
+        user.is_email_verified = True
+        user.email_verification_token = None
+        user.email_verification_token_created = None
         user.save()
         messages.success(request, 'Congratulations! Your account is activated.')
-        return redirect('accounts:payment_details')
+        return redirect('accounts:login')
     else:
         messages.error(request, 'Invalid activation link')
         return redirect('accounts:register')

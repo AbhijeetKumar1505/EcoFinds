@@ -1,0 +1,1 @@
+console.log('Auction app loaded.'); 

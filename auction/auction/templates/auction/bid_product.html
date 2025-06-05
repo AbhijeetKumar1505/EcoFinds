@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bid on {{ product.name }}</title>
+    <link rel="stylesheet" href="/static/auction/style.css">
+</head>
+<body>
+    <h1>Bid on {{ product.name }}</h1>
+    <p>{{ product.description }}</p>
+    <p>Current Highest Bid: ${{ product.highest_price }}</p>
+    <p>Auction Ends At: {{ product.end_time }}</p>
+    {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <label>Bid Amount: <input type="number" step="0.01" name="amount" required></label><br>
+        <button type="submit">Place Bid</button>
+    </form>
+    <a href="{% url 'product_list' %}">Back to Product List</a>
+</body>
+</html> 

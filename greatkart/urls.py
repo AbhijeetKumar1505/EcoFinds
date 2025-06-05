@@ -15,18 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from . import views
+# from . import views # Removed the import for the old home view
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('securelogin/', admin.site.urls),
-    path('', views.home, name='home'),
-    path('store/', include('store.urls')),
+    # path('', views.home, name='home'), # Removed the old root mapping
+    path('', include('store.urls', namespace='store')),  # Make store home the default
     path('cart/', include('carts.urls')),
     path('orders/', include('orders.urls')),
 
-    path('', include('ecofinds.urls')),
+    # path('', include('ecofinds.urls')), # Removed or comment out if this also maps to root
     path('accounts/', include('accounts.urls', namespace='accounts')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

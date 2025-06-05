@@ -1,10 +1,52 @@
-{% autoescape off %}
-
-Hi {{user.first_name}},
-
-Please click on below link to confirm your registration.
-http://{{domain}}{% url 'accounts:activate' uidb64=uid token=token %}
-
-If you think it's not you, please ignore this email.
-
-{% endautoescape %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3167eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to EcoFinds!</h2>
+        <p>Hello {{ user.first_name }},</p>
+        <p>Thank you for creating an account with EcoFinds. To complete your registration and activate your account, please click the button below:</p>
+        
+        <a href="http://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}" class="button">Activate Your Account</a>
+        
+        <p>If the button above doesn't work, you can copy and paste the following link into your browser:</p>
+        <p>http://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}</p>
+        
+        <p>This link will expire in 24 hours.</p>
+        
+        <p>If you did not create an account with EcoFinds, please ignore this email.</p>
+        
+        <div class="footer">
+            <p>Best regards,<br>The EcoFinds Team</p>
+        </div>
+    </div>
+</body>
+</html>

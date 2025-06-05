@@ -103,6 +103,30 @@
 						<i class="fas fa-exclamation-triangle me-2"></i>This product is currently unavailable
 					</div>
 					{% endif %}
+
+					{% if single_product.listing_type == 'auction' %}
+						{% if single_product.auction %}
+							<div class="auction-info mt-3">
+								<h4>Auction Details</h4>
+								<p><strong>Current Price:</strong> ${{ single_product.auction.current_price }}</p>
+								<p><strong>Time Remaining:</strong> {{ single_product.auction.time_remaining }}</p>
+								<p><strong>Minimum Bid:</strong> ${{ single_product.auction.min_bid_increment }}</p>
+								<a href="{% url 'store:auction_detail' single_product.slug %}" class="btn btn-primary">View Auction</a>
+							</div>
+						{% else %}
+							{% if user == single_product.created_by %}
+								<div class="mt-3">
+									<a href="{% url 'store:create_auction' single_product.id %}" class="btn btn-success">Create Auction</a>
+								</div>
+							{% endif %}
+						{% endif %}
+					{% else %}
+						{% if user == single_product.created_by %}
+							<div class="mt-3">
+								<a href="{% url 'store:create_auction' single_product.id %}" class="btn btn-success">Convert to Auction</a>
+							</div>
+						{% endif %}
+					{% endif %}
 				</div>
 			</div>
 

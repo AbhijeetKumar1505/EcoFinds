@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="section-conten padding-y" style="min-height:84vh">
+    <div class="card mx-auto" style="max-width: 400px; margin-top:50px;">
+        <div class="card-body">
+            <h4 class="card-title mb-4 text-center">Verify Your Email</h4>
+            {% include 'includes/alerts.html' %}
+            
+            <form action="{% url 'accounts:verify_email' %}" method="POST">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label>Email Address</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label>Verification Code</label>
+                    <input type="text" name="verification_code" class="form-control" required 
+                           placeholder="Enter the 6-digit code sent to your email">
+                </div>
+                <div class="form-group text-center">
+                    <button type="submit" class="btn btn-primary btn-block">Verify Email</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-center">
+            <p class="mb-0">Didn't receive the code? <a href="{% url 'accounts:register' %}" class="text-primary">Register again</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %} 

@@ -52,8 +52,11 @@ class Account(AbstractBaseUser):
     last_login      = models.DateTimeField(auto_now_add=timezone.now)
     is_admin        = models.BooleanField(default=False)
     is_staff        = models.BooleanField(default=False)
-    is_active        = models.BooleanField(default=False)
-    is_superadmin        = models.BooleanField(default=False)
+    is_active       = models.BooleanField(default=False)
+    is_superadmin   = models.BooleanField(default=False)
+    is_email_verified = models.BooleanField(default=False)
+    email_verification_token = models.CharField(max_length=100, blank=True, null=True)
+    email_verification_token_created = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']

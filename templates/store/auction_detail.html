@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.title }} - Auction{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <img src="{{ product.images.url }}" class="card-img-top" alt="{{ product.title }}">
+                <div class="card-body">
+                    <h2 class="card-title">{{ product.title }}</h2>
+                    <p class="card-text">{{ product.description }}</p>
+                    <p><strong>Condition:</strong> {{ product.get_condition_display }}</p>
+                    <p><strong>Location:</strong> {{ product.location }}</p>
+                    <p><strong>Seller:</strong> {{ product.created_by.username }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title">Auction Details</h3>
+                    <div class="auction-info">
+                        <p><strong>Current Price:</strong> ${{ auction.current_price }}</p>
+                        <p><strong>Starting Price:</strong> ${{ auction.start_price }}</p>
+                        <p><strong>Minimum Bid Increment:</strong> ${{ auction.min_bid_increment }}</p>
+                        <p><strong>Time Remaining:</strong> {{ auction.time_remaining }}</p>
+                        <p><strong>Number of Bids:</strong> {{ auction.bids.count }}</p>
+                    </div>
+
+                    {% if not auction.is_ended %}
+                        {% if user.is_authenticated %}
+                            <form method="post" class="mt-4">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    {{ bid_form.amount.label_tag }}
+                                    {{ bid_form.amount }}
+                                    {% if bid_form.amount.errors %}
+                                        <div class="alert alert-danger">
+                                            {{ bid_form.amount.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <button type="submit" class="btn btn-primary mt-3">Place Bid</button>
+                            </form>
+                        {% else %}
+                            <p class="mt-4">Please <a href="{% url 'login' %}">login</a> to place a bid.</p>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info mt-4">
+                            {% if auction.winner %}
+                                <p>Winner: {{ auction.winner.username }}</p>
+                            {% else %}
+                                <p>This auction has ended with no winner.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h4>Recent Bids</h4>
+                    <div class="list-group">
+                        {% for bid in bids %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ bid.bidder.username }}</h6>
+                                <small>{{ bid.timestamp|timesince }} ago</small>
+                            </div>
+                            <p class="mb-1">${{ bid.amount }}</p>
+                        </div>
+                        {% empty %}
+                        <p>No bids yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

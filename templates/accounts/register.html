@@ -66,9 +66,6 @@
                             <label>Create Password</label>
                             <div class="input-group">
                                 {{ form.password }}
-                                <button class="btn btn-outline-secondary toggle-password" type="button">
-                                    <i class="fas fa-eye"></i>
-                                </button>
                             </div>
                             <div class="invalid-feedback">Please enter a password</div>
                         </div>
@@ -76,9 +73,6 @@
                             <label>Confirm Password</label>
                             <div class="input-group">
                                 {{ form.confirm_password }}
-                                <button class="btn btn-outline-secondary toggle-password" type="button">
-                                    <i class="fas fa-eye"></i>
-                                </button>
                             </div>
                             <div class="invalid-feedback">Please confirm your password</div>
                         </div>
@@ -144,8 +138,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: #e9ecef;
-    color: #6c757d;
+    background-color: var(--bs-gray-200);
+    color: var(--bs-gray-600);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -155,53 +149,57 @@
 }
 
 .step.active .step-number {
-    background-color: #007bff;
+    background-color: var(--bs-primary);
     color: white;
 }
 
 .step-text {
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--bs-gray-600);
 }
 
 .step.active .step-text {
-    color: #007bff;
+    color: var(--bs-primary);
     font-weight: bold;
 }
 
 .step-line {
     flex-grow: 1;
     height: 2px;
-    background-color: #e9ecef;
+    background-color: var(--bs-gray-200);
     margin: 0 1rem;
     position: relative;
     top: -20px;
 }
 
 .form-section {
-    background-color: #f8f9fa;
+    background-color: var(--bs-gray-100);
     padding: 1.5rem;
     border-radius: 0.5rem;
     margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease;
 }
 
 .section-title {
-    color: #495057;
+    color: var(--bs-gray-700);
     margin-bottom: 1.25rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 2px solid var(--bs-gray-300);
+    transition: color 0.3s ease, border-color 0.3s ease;
 }
 
 .form-control {
     border-radius: 0.25rem;
     padding: 0.75rem 1rem;
-    border: 1px solid #ced4da;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    border: 1px solid var(--bs-gray-400);
+    transition: all 0.3s ease;
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
 }
 
 .form-control:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
 }
 
 .btn-primary {
@@ -217,6 +215,7 @@
 
 .form-text {
     font-size: 0.875rem;
+    color: var(--bs-gray-600);
 }
 
 .toggle-password {
@@ -228,23 +227,76 @@
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
 }
+
+/* Dark mode specific styles */
+[data-bs-theme="dark"] .form-section {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .section-title {
+    color: var(--bs-light);
+    border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .form-control {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-control:focus {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-primary);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-text {
+    color: var(--bs-gray-400);
+}
+
+[data-bs-theme="dark"] .step-number {
+    background-color: var(--bs-gray-700);
+    color: var(--bs-gray-300);
+}
+
+[data-bs-theme="dark"] .step-text {
+    color: var(--bs-gray-400);
+}
+
+[data-bs-theme="dark"] .step-line {
+    background-color: var(--bs-gray-700);
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .card-footer {
+    background-color: var(--bs-dark);
+    border-top-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .text-primary {
+    color: var(--bs-primary) !important;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+    color: var(--bs-body-color);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+    background-color: var(--bs-gray-700);
+    color: var(--bs-body-color);
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Toggle password visibility
-    document.querySelectorAll('.toggle-password').forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.previousElementSibling;
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
-            this.querySelector('i').classList.toggle('fa-eye');
-            this.querySelector('i').classList.toggle('fa-eye-slash');
-        });
-    });
-
     // Handle other language field
     const languageSelect = document.querySelector('#id_preferred_language');
     const otherLanguageGroup = document.querySelector('#otherLanguageGroup');

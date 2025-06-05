@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Product, ReviewRating, ProductGallery
+from .models import Product, ReviewRating, ProductGallery, Auction, Bid
 from category.models import Category
 from carts.models import CartItem
 from django.db.models import Q, Avg
@@ -7,7 +7,7 @@ from django.db.models import Q, Avg
 from carts.views import _cart_id
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponse
-from .forms import ReviewForm, ProductForm
+from .forms import ReviewForm, ProductForm, AuctionForm, BidForm
 from django.contrib import messages
 from orders.models import OrderProduct, Order
 from django.http import Http404
@@ -21,6 +21,7 @@ from wishlist.models import WishlistItem, SearchQuery, PriceAlert
 from django.contrib.auth import get_user_model
 import datetime
 import os
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -225,23 +226,29 @@ def submit_review(request, product_id):
 def add_product(request):
     if request.method == 'POST':
         # Get form data
-        title = request.POST.get('product_name')
+        title = request.POST.get('title')
         brand = request.POST.get('brand')
         category_id = request.POST.get('category')
         description = request.POST.get('description')
         price = request.POST.get('price')
         condition = request.POST.get('condition')
         location = request.POST.get('location')
+        stock = request.POST.get('stock')
         images = request.FILES.getlist('images')
 
         # Validate required fields
-        if not all([title, brand, category_id, description, price, condition, location]):
+        if not all([title, brand, category_id, description, price, condition, location, stock]):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('store:add_product')
 
         # Validate at least one image
         if not images:
             messages.error(request, 'Please upload at least one product image.')
+            return redirect('store:add_product')
+
+        # Validate number of images
+        if len(images) > 7:
+            messages.error(request, 'You can only upload up to 7 images.')
             return redirect('store:add_product')
 
         try:
@@ -255,9 +262,9 @@ def add_product(request):
                 price=price,
                 condition=condition,
                 location=location,
+                stock=stock,
                 is_available=True,
                 created_by=request.user,
-                stock=1,
                 images=images[0]
             )
 
@@ -275,10 +282,7 @@ def add_product(request):
             return redirect('store:add_product')
 
     categories = Category.objects.all()
-    context = {
-        'categories': categories,
-    }
-    return render(request, 'store/add_product.html', context)
+    return render(request, 'store/add_product.html', {'categories': categories})
 
 
 @login_required(login_url='accounts:login')
@@ -706,3 +710,78 @@ def activate_product(request, product_id):
         product.save()
         messages.success(request, 'Product has been activated successfully.')
     return redirect('store:my_listings')
+
+
+def auction_list(request):
+    active_auctions = Auction.objects.filter(is_active=True, end_time__gt=timezone.now()).select_related('product')
+    ended_auctions = Auction.objects.filter(is_active=True, end_time__lte=timezone.now()).select_related('product')
+    
+    context = {
+        'active_auctions': active_auctions,
+        'ended_auctions': ended_auctions,
+    }
+    return render(request, 'store/auction_list.html', context)
+
+
+def auction_detail(request, product_slug):
+    product = get_object_or_404(Product, slug=product_slug)
+    auction = get_object_or_404(Auction, product=product)
+    bids = auction.bids.all()[:10]  # Get last 10 bids
+    
+    if request.method == 'POST' and request.user.is_authenticated:
+        bid_form = BidForm(request.POST, auction=auction)
+        if bid_form.is_valid():
+            bid = bid_form.save(commit=False)
+            bid.auction = auction
+            bid.bidder = request.user
+            bid.save()
+            
+            # Update current price
+            auction.current_price = bid.amount
+            auction.save()
+            
+            messages.success(request, 'Your bid has been placed successfully!')
+            return redirect('store:auction_detail', product_slug=product_slug)
+    else:
+        bid_form = BidForm(auction=auction)
+    
+    context = {
+        'product': product,
+        'auction': auction,
+        'bids': bids,
+        'bid_form': bid_form,
+    }
+    return render(request, 'store/auction_detail.html', context)
+
+
+@login_required
+def create_auction(request, product_id):
+    product = get_object_or_404(Product, id=product_id, created_by=request.user)
+    
+    if request.method == 'POST':
+        form = AuctionForm(request.POST)
+        if form.is_valid():
+            auction = form.save(commit=False)
+            auction.product = product
+            auction.current_price = auction.start_price
+            auction.start_time = timezone.now()
+            auction.save()
+            messages.success(request, 'Auction created successfully!')
+            return redirect('store:auction_detail', product_slug=product.slug)
+    else:
+        form = AuctionForm()
+    
+    context = {
+        'form': form,
+        'product': product,
+    }
+    return render(request, 'store/create_auction.html', context)
+
+
+@login_required
+def my_bids(request):
+    user_bids = Bid.objects.filter(bidder=request.user).select_related('auction', 'auction__product')
+    context = {
+        'bids': user_bids,
+    }
+    return render(request, 'store/my_bids.html', context)

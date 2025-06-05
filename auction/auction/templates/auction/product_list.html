@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auction - Product List</title>
+    <link rel="stylesheet" href="/static/auction/style.css">
+</head>
+<body>
+    <h1>Product List</h1>
+    <a href="{% url 'create_product' %}">List a New Product</a>
+    <ul>
+        {% for product in products %}
+        <li>
+            <strong>{{ product.name }}</strong> - {{ product.description }}<br>
+            Highest Bid: ${{ product.highest_price }}<br>
+            Ends at: {{ product.end_time }}<br>
+            <a href="{% url 'bid_product' product.id %}">Bid</a>
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html> 

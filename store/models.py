@@ -115,3 +115,40 @@ class ProductGallery(models.Model):
     class Meta:
         verbose_name = 'productgallery'
         verbose_name_plural = 'product gallery'
+
+class Auction(models.Model):
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='auction')
+    start_price = models.DecimalField(max_digits=10, decimal_places=2)
+    current_price = models.DecimalField(max_digits=10, decimal_places=2)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    min_bid_increment = models.DecimalField(max_digits=10, decimal_places=2, default=1.00)
+    is_active = models.BooleanField(default=True)
+    winner = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='won_auctions')
+
+    def __str__(self):
+        return f"Auction for {self.product.title}"
+
+    def is_ended(self):
+        return timezone.now() > self.end_time
+
+    def time_remaining(self):
+        if self.is_ended():
+            return "Auction ended"
+        remaining = self.end_time - timezone.now()
+        days = remaining.days
+        hours = remaining.seconds // 3600
+        minutes = (remaining.seconds % 3600) // 60
+        return f"{days}d {hours}h {minutes}m"
+
+class Bid(models.Model):
+    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='bids')
+    bidder = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='bids')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-amount']
+
+    def __str__(self):
+        return f"Bid of {self.amount} by {self.bidder.username}"

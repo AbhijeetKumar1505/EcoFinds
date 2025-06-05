@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Auctions{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Active Auctions</h2>
+    <div class="row">
+        {% for auction in active_auctions %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ auction.product.images.url }}" class="card-img-top" alt="{{ auction.product.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ auction.product.title }}</h5>
+                    <p class="card-text">
+                        Current Price: ${{ auction.current_price }}<br>
+                        Time Remaining: {{ auction.time_remaining }}<br>
+                        Minimum Bid: ${{ auction.min_bid_increment }}
+                    </p>
+                    <a href="{% url 'store:auction_detail' auction.product.slug %}" class="btn btn-primary">View Auction</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No active auctions at the moment.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="mb-4 mt-5">Ended Auctions</h2>
+    <div class="row">
+        {% for auction in ended_auctions %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ auction.product.images.url }}" class="card-img-top" alt="{{ auction.product.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ auction.product.title }}</h5>
+                    <p class="card-text">
+                        Final Price: ${{ auction.current_price }}<br>
+                        {% if auction.winner %}
+                        Winner: {{ auction.winner.username }}
+                        {% else %}
+                        No winner
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'store:auction_detail' auction.product.slug %}" class="btn btn-secondary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p>No ended auctions to display.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

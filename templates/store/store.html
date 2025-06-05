@@ -34,7 +34,7 @@
 
 <div class="row">
 	<div class="col-md-3">
-		<div class="filters-sidebar bg-light p-3 rounded shadow-sm" style="position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto;">
+		<div class="filters-sidebar card p-3 rounded shadow-sm" style="position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto;">
 			<h5 class="mb-3">Filters</h5>
 			<form method="GET" action="{% url 'store:store' %}" id="filterForm">
 				<!-- Category Filter -->
@@ -288,6 +288,40 @@
     background-color: #dee2e6;
     border-radius: 3px;
 }
+
+/* Dark mode specific styles */
+[data-bs-theme="dark"] .filters-sidebar {
+	background-color: var(--bs-dark);
+	border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .form-label {
+	color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .form-control {
+	background-color: var(--bs-dark);
+	border-color: var(--bs-border-color);
+	color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-select:focus,
+[data-bs-theme="dark"] .form-control:focus {
+	background-color: var(--bs-dark);
+	border-color: var(--bs-primary);
+	color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary {
+	color: var(--bs-body-color);
+	border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+	background-color: var(--bs-gray-700);
+	color: var(--bs-body-color);
+}
 </style>
 {% endblock %}
 
@@ -333,4 +367,5 @@
         });
     });
 </script>
+
 {% endblock %}

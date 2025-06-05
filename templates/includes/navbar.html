@@ -8,7 +8,7 @@
   <div class="container">
 <div class="row align-items-center">
   <div class="col-lg-2 col-md-3 col-6">
-    <a href="{% url 'home' %}" class="brand-wrap">
+    <a href="{% url 'store:home' %}" class="brand-wrap">
       <img class="logo" src="{% static 'images/logo.png' %}">
     </a> 
   </div>
@@ -26,15 +26,15 @@
     </div>  <!-- category-wrap.// -->
   </div> <!-- col.// -->
   <a href="{% url 'store:store' %}" class="btn btn-outline-primary">Store</a>
-  <div class="col-lg  col-md-6 col-sm-12 col">
+  <div class="col-lg col-md-6 col-sm-12 col">
     <form class="d-flex me-3" action="{% url 'store:search' %}" method="GET">
       <input class="form-control me-2" type="search" name="keyword" placeholder="Search" aria-label="Search">
       <button class="btn btn-outline-success" type="submit">Search</button>
     </form>
     {% if user.is_authenticated %}
-      <a href="{% url 'store:add_product' %}" class="btn btn-primary me-2">Add Product</a>
-      <div class="dropdown">
-      </div>
+      <a href="{% url 'store:add_product' %}" class="btn btn-success me-2">
+        <img src="{% static 'images/plus.png' %}" alt="Add Product" height="20" class="me-1"> Add Product
+      </a>
     {% endif %}
   </div> <!-- col.// -->
   <div class="col-lg-3 col-sm-6 col-8 order-2 order-lg-3">
@@ -44,19 +44,19 @@
             <small class="title text-muted">Welcome guest!</small>
             <div>
               <a href="{% url 'accounts:login' %}">Sign in</a> <span class="dark-transp"> | </span>
-              <a href="{% url 'register' %}"> Register</a>
+              <a href="{% url 'accounts:register' %}"> Register</a>
             </div>
           </div>
           {% else %}
           <div class="widget-header">
             <small class="title text-muted">Welcome {{user.first_name}}!</small>
             <div>
-              <a href="{% url 'dashboard' %}">Dashboard</a> <span class="dark-transp"> | </span>
-              <a href="{% url 'logout' %}"> Logout</a>
+              <a href="{% url 'accounts:dashboard' %}">Dashboard</a> <span class="dark-transp"> | </span>
+              <a href="{% url 'accounts:logout' %}"> Logout</a>
             </div>
           </div>
           {% endif %}
-          <a href="{% url 'cart' %}" class="widget-header pl-3 ml-3">
+          <a href="{% url 'store:cart' %}" class="widget-header pl-3 ml-3">
             <div class="icon icon-sm rounded-circle border"><i class="fa fa-shopping-cart"></i></div>
             <span class="badge badge-pill badge-danger notify">{{cart_count}}</span>
           </a>
