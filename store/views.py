@@ -227,17 +227,14 @@ def add_product(request):
     if request.method == 'POST':
         # Get form data
         title = request.POST.get('title')
-        brand = request.POST.get('brand')
-        category_id = request.POST.get('category')
+        category_name = request.POST.get('category')
         description = request.POST.get('description')
         price = request.POST.get('price')
-        condition = request.POST.get('condition')
-        location = request.POST.get('location')
-        stock = request.POST.get('stock')
+        quantity = request.POST.get('quantity')
         images = request.FILES.getlist('images')
 
         # Validate required fields
-        if not all([title, brand, category_id, description, price, condition, location, stock]):
+        if not all([title, category_name, description, price, quantity]):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('store:add_product')
 
@@ -252,20 +249,23 @@ def add_product(request):
             return redirect('store:add_product')
 
         try:
+            # Get or create category
+            category, created = Category.objects.get_or_create(
+                category_name=category_name,
+                defaults={'slug': slugify(category_name)}
+            )
+
             # Create product
             product = Product.objects.create(
                 title=title,
                 slug=slugify(title),
-                brand=brand,
-                category_id=category_id,
+                category=category,
                 description=description,
                 price=price,
-                condition=condition,
-                location=location,
-                stock=stock,
+                stock=quantity,  # Using quantity as stock
                 is_available=True,
                 created_by=request.user,
-                images=images[0]
+                images=images[0]  # First image as main image
             )
 
             # Save additional images
@@ -281,8 +281,7 @@ def add_product(request):
             messages.error(request, f'Error adding product: {str(e)}')
             return redirect('store:add_product')
 
-    categories = Category.objects.all()
-    return render(request, 'store/add_product.html', {'categories': categories})
+    return render(request, 'store/add_product.html')
 
 
 @login_required(login_url='accounts:login')
